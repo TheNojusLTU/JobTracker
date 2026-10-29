@@ -1,10 +1,6 @@
-using System.Net.Mail;
 using JobTracker.Contracts;
-using JobTracker.Data;
+using JobTracker.Services;
 using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace JobTracker.Api;
 
@@ -36,108 +32,46 @@ public static class AuthEndpoints
             .Produces<UserResponse>()
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized);
-        writes.MapPost("/logout", async (SignInManager<ApplicationUser> signInManager) =>
+        writes.MapPost("/logout", async (IAuthService authService) =>
         {
-            await signInManager.SignOutAsync();
+            await authService.LogoutAsync();
             return TypedResults.NoContent();
         }).RequireAuthorization()
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        auth.MapGet("/me", async (HttpContext context, UserManager<ApplicationUser> userManager) =>
+        auth.MapGet("/me", async (HttpContext context, IAuthService authService) =>
         {
-            var user = await userManager.GetUserAsync(context.User);
+            var user = await authService.GetCurrentUserAsync(context.User);
             return user is null
                 ? Results.Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Authentication required.")
-                : Results.Ok(UserResponse.FromUser(user));
+                : Results.Ok(user);
         }).RequireAuthorization()
             .Produces<UserResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized);
     }
 
-    private static async Task<IResult> RegisterAsync(
-        RegisterRequest request,
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager)
+    private static async Task<IResult> RegisterAsync(RegisterRequest request, IAuthService authService)
     {
-        var username = request.Username?.Trim() ?? "";
-        var displayName = request.DisplayName?.Trim() ?? "";
-        var email = request.Email?.Trim();
-        var avatarKey = string.IsNullOrEmpty(request.AvatarKey) ? AvatarCatalog.Default.Key : request.AvatarKey;
-        var errors = new Dictionary<string, string[]>();
-
-        if (username.Length is < 3 or > 20)
-            errors["username"] = ["Username must be between 3 and 20 characters."];
-        if (displayName.Length is < 3 or > 20)
-            errors["displayName"] = ["Display name must be between 3 and 20 characters."];
-        if (!string.IsNullOrEmpty(email) && !MailAddress.TryCreate(email, out _))
-            errors["email"] = ["Enter a valid email address, or leave it blank."];
-        if (string.IsNullOrEmpty(request.Password))
-            errors["password"] = ["Password is required."];
-        if (!AvatarCatalog.Contains(avatarKey))
-            errors["avatarKey"] = ["Choose an available avatar."];
-        if (errors.Count > 0)
-            return Results.ValidationProblem(errors);
-
-        var user = new ApplicationUser
+        var result = await authService.RegisterAsync(request);
+        return result.Status switch
         {
-            UserName = username,
-            DisplayName = displayName,
-            Email = string.IsNullOrEmpty(email) ? null : email,
-            AvatarKey = avatarKey
+            AuthStatus.Success => Results.Created("/api/auth/me", result.User),
+            AuthStatus.DuplicateUsername => Results.Problem(statusCode: StatusCodes.Status409Conflict,
+                title: "Username is already taken."),
+            _ => Results.ValidationProblem(result.Errors!)
         };
-
-        IdentityResult result;
-        try
-        {
-            result = await userManager.CreateAsync(user, request.Password!);
-        }
-        // The unique index also handles simultaneous registrations of the same normalized username.
-        catch (DbUpdateException exception) when (exception.InnerException is PostgresException
-        { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "UserNameIndex" })
-        {
-            return DuplicateUsername();
-        }
-
-        if (!result.Succeeded)
-        {
-            if (result.Errors.Any(error => error.Code == "DuplicateUserName"))
-                return DuplicateUsername();
-
-            return Results.ValidationProblem(result.Errors
-                .GroupBy(error => error.Code.StartsWith("Password", StringComparison.Ordinal) ? "password"
-                    : error.Code.Contains("Email", StringComparison.Ordinal) ? "email" : "username")
-                .ToDictionary(group => group.Key, group => group.Select(error => error.Description).ToArray()));
-        }
-
-        await signInManager.SignInAsync(user, isPersistent: false);
-        return Results.Created("/api/auth/me", UserResponse.FromUser(user));
     }
 
-    private static async Task<IResult> LoginAsync(
-        LoginRequest request,
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager)
+    private static async Task<IResult> LoginAsync(LoginRequest request, IAuthService authService)
     {
-        var errors = new Dictionary<string, string[]>();
-        if (string.IsNullOrWhiteSpace(request.Username))
-            errors["username"] = ["Username is required."];
-        if (string.IsNullOrEmpty(request.Password))
-            errors["password"] = ["Password is required."];
-        if (errors.Count > 0)
-            return Results.ValidationProblem(errors);
-
-        var user = await userManager.FindByNameAsync(request.Username!.Trim());
-        if (user is null || !(await signInManager.PasswordSignInAsync(
-                user, request.Password!, isPersistent: false, lockoutOnFailure: true)).Succeeded)
+        var result = await authService.LoginAsync(request);
+        return result.Status switch
         {
-            return Results.Problem(statusCode: StatusCodes.Status401Unauthorized,
-                title: "Invalid username or password.");
-        }
-
-        return Results.Ok(UserResponse.FromUser(user));
+            AuthStatus.Success => Results.Ok(result.User),
+            AuthStatus.InvalidCredentials => Results.Problem(statusCode: StatusCodes.Status401Unauthorized,
+                title: "Invalid username or password."),
+            _ => Results.ValidationProblem(result.Errors!)
+        };
     }
-
-    private static IResult DuplicateUsername() =>
-        Results.Problem(statusCode: StatusCodes.Status409Conflict, title: "Username is already taken.");
 }
