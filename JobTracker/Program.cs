@@ -27,6 +27,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<IApplicationService, ApplicationService>();
 builder.Services.AddScoped<IApplicationImportService, ApplicationImportService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
