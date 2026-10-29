@@ -1,11 +1,12 @@
 using System.Net.Mail;
+using JobTracker.Contracts;
 using JobTracker.Data;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace JobTracker.Auth;
+namespace JobTracker.Api;
 
 public static class AuthEndpoints
 {
@@ -25,19 +26,7 @@ public static class AuthEndpoints
         }).AllowAnonymous()
             .WithSummary("Gets a CSRF request token and sets its companion cookie.");
 
-        var writes = auth.MapGroup("");
-        writes.AddEndpointFilter(async (context, next) =>
-        {
-            var antiforgery = context.HttpContext.RequestServices.GetRequiredService<IAntiforgery>();
-            if (!await antiforgery.IsRequestValidAsync(context.HttpContext))
-            {
-                return Results.Problem(statusCode: StatusCodes.Status400BadRequest,
-                    title: "Invalid CSRF token.",
-                    detail: "Get /api/auth/csrf and send its request token in the X-CSRF-TOKEN header with the companion cookie.");
-            }
-
-            return await next(context);
-        });
+        var writes = auth.MapGroup("").AddEndpointFilter<CsrfEndpointFilter>();
 
         writes.MapPost("/register", RegisterAsync).AllowAnonymous()
             .Produces<UserResponse>(StatusCodes.Status201Created)
