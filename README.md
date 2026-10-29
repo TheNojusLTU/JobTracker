@@ -48,7 +48,7 @@ Open the frontend URL printed by Vite. Requests to `/api` are forwarded to `http
 - Swagger: `http://localhost:5099/swagger` in Development; OpenAPI JSON is at `/openapi/v1.json`.
 - Errors: API errors use JSON Problem Details with a request path and trace ID.
 
-The server no longer hosts Blazor pages. The old form routes `/account/login`, `/account/logout`, `/account/register`, and `/account/applications/save` return **404**. Their UI files remain for later cleanup.
+The server no longer hosts Blazor pages. The old Blazor UI and the `JobTracker.Client` project were removed in KAN-74.
 
 Database models and migrations are preserved. Cookie authentication APIs are implemented in KAN-70; see [authentication endpoints, CSRF setup, and API checks](docs/authentication.md). The React frontend provides registration, login, and cookie-backed session handling. Authenticated users can list, search/filter, create, and edit applications, including updating their status, through the KAN-71 API. Application write requests include the API's required CSRF token.
 

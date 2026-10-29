@@ -98,49 +98,6 @@ app.MapGet("/api/health", () => TypedResults.Ok(new { status = "healthy" }))
     .WithDescription("Liveness only; does not connect to PostgreSQL or check other dependencies.")
     .AllowAnonymous();
 
-app.MapPost("/account/applications/delete", async (
-    HttpContext httpContext,
-    IAntiforgery antiforgery,
-    UserManager<ApplicationUser> userManager,
-    ApplicationDbContext dbContext) =>
-{
-
-    if (!await antiforgery.IsRequestValidAsync(httpContext))
-    {
-        return Results.BadRequest("Anti-forgery token validation failed.");
-    }
-
-    var user = await userManager.GetUserAsync(httpContext.User);
-    if (user is null)
-    {
-        return Results.Challenge();
-    }
-
-    var form = await httpContext.Request.ReadFormAsync();
-    var idInput = form["Id"].ToString();
-    
-    if (!int.TryParse(idInput, out var applicationId) || applicationId <= 0)
-    {
-        return Results.BadRequest("Invalid Application ID.");
-    }
-
-    var application = await dbContext.JobApplications
-        .SingleOrDefaultAsync(item => item.Id == applicationId && item.UserId == user.Id);
-
-    if (application is null)
-    {
-        return Results.NotFound();
-    }
-
-    dbContext.JobApplications.Remove(application);
-    await dbContext.SaveChangesAsync();
-    return Results.LocalRedirect("/applications?deleted=true");
-}).RequireAuthorization();
-
-app.MapStaticAssets();
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(JobTracker.Client._Imports).Assembly);
+app.MapApplicationEndpoints();
 
 app.Run();
