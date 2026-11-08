@@ -11,16 +11,17 @@ public static class PagingExtensions
         this IQueryable<TSource> query,
         int page,
         int pageSize,
-        Func<TSource, TResult> map)
+        Func<TSource, TResult> map,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(query);
         ArgumentNullException.ThrowIfNull(map);
 
-        var totalCount = await query.CountAsync();
+        var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return new PagedResponse<TResult>(items.Select(map).ToList(), page, pageSize, totalCount);
     }
