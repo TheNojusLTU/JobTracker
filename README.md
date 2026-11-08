@@ -64,4 +64,4 @@ npm --prefix JobTracker.Web run lint
 npm --prefix JobTracker.Web run build
 ```
 
-PostgreSQL-specific import concurrency tests require a **disposable, empty database**. Set `JOBTRACKER_TEST_POSTGRES` to its connection string before running `dotnet test`; the tests create tables and test users in that database. Without this setting those tests are skipped.
+PostgreSQL-specific import concurrency tests require a **disposable, empty database**. Set `JOBTRACKER_TEST_POSTGRES` to its connection string before running `dotnet test`; the tests create tables and test users in that database. Without this setting those tests are skipped, unless `JOBTRACKER_REQUIRE_POSTGRES_TESTS` is `true`, in which case they fail instead. CI starts a disposable PostgreSQL service and requires these tests.

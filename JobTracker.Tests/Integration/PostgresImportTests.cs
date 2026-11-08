@@ -18,7 +18,8 @@ public sealed class PostgresFactAttribute : FactAttribute
 {
     public PostgresFactAttribute()
     {
-        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBTRACKER_TEST_POSTGRES")))
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBTRACKER_TEST_POSTGRES")) &&
+            Environment.GetEnvironmentVariable("JOBTRACKER_REQUIRE_POSTGRES_TESTS") != "true")
         {
             Skip = "Set JOBTRACKER_TEST_POSTGRES to a disposable PostgreSQL database to run this test.";
         }
@@ -33,7 +34,8 @@ public class PostgresImportTests
     [PostgresFact]
     public async Task Imports_AcrossInstances_RejectOverlap_AndReleaseLocks()
     {
-        var connectionString = Environment.GetEnvironmentVariable("JOBTRACKER_TEST_POSTGRES")!;
+        var connectionString = Environment.GetEnvironmentVariable("JOBTRACKER_TEST_POSTGRES");
+        Assert.False(string.IsNullOrWhiteSpace(connectionString), "JOBTRACKER_TEST_POSTGRES must be set when PostgreSQL tests are required.");
         await using var first = new PostgresFactory(connectionString);
         await using var second = new PostgresFactory(connectionString);
         using (var setup = first.Services.CreateScope())
