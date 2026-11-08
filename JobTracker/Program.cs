@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using JobTracker.Api;
 using JobTracker.Auth;
 using JobTracker.Data;
+using JobTracker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,6 +38,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager();
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
 builder.Services.AddAuthorization();
