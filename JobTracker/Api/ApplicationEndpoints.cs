@@ -104,9 +104,14 @@ public static class ApplicationEndpoints
         int pageSize = PagingExtensions.DefaultPageSize)
     {
         var errors = PagingExtensions.ValidatePaging(page, pageSize);
-        if (from is not null && to is not null && from.Value.Date > to.Value.Date)
+        DateRange? dates = null;
+        try
         {
-            errors["from"] = ["From date can't be after To date."];
+            dates = from is null && to is null ? null : new DateRange(from, to);
+        }
+        catch (InvalidDateRangeException exception)
+        {
+            errors["from"] = [exception.Message];
         }
 
         if (errors.Count > 0)
@@ -114,7 +119,6 @@ public static class ApplicationEndpoints
             return TypedResults.ValidationProblem(errors);
         }
 
-        DateRange? dates = from is null && to is null ? null : new DateRange(from, to);
         var result = await service.GetApplicationsAsync(
             GetUserId(user),
             search,

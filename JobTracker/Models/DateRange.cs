@@ -6,7 +6,7 @@ public readonly struct DateRange : IEquatable<DateRange>
     {
         if (from is not null && to is not null && from.Value.Date > to.Value.Date)
         {
-            throw new ArgumentException("From date can't be after To date.", nameof(from));
+            throw new InvalidDateRangeException(from.Value, to.Value);
         }
 
         From = from;
