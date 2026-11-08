@@ -1,10 +1,9 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.0.0
 MinimumVisualStudioVersion = 16.0.0.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobTracker", "JobTracker\JobTracker.csproj", "{D820C6BD-DC19-4337-8DBE-F7DFBA19E9B3}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobTracker.Client", "JobTracker.Client\JobTracker.Client.csproj", "{686E82E8-A588-4818-901E-D8FBBE3C04EE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,18 +15,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{686E82E8-A588-4818-901E-D8FBBE3C04EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{686E82E8-A588-4818-901E-D8FBBE3C04EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{686E82E8-A588-4818-901E-D8FBBE3C04EE}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{686E82E8-A588-4818-901E-D8FBBE3C04EE}.Debug|x64.Build.0 = Debug|Any CPU
-		{686E82E8-A588-4818-901E-D8FBBE3C04EE}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{686E82E8-A588-4818-901E-D8FBBE3C04EE}.Debug|x86.Build.0 = Debug|Any CPU
-		{686E82E8-A588-4818-901E-D8FBBE3C04EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{686E82E8-A588-4818-901E-D8FBBE3C04EE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{686E82E8-A588-4818-901E-D8FBBE3C04EE}.Release|x64.ActiveCfg = Release|Any CPU
-		{686E82E8-A588-4818-901E-D8FBBE3C04EE}.Release|x64.Build.0 = Release|Any CPU
-		{686E82E8-A588-4818-901E-D8FBBE3C04EE}.Release|x86.ActiveCfg = Release|Any CPU
-		{686E82E8-A588-4818-901E-D8FBBE3C04EE}.Release|x86.Build.0 = Release|Any CPU
 		{D820C6BD-DC19-4337-8DBE-F7DFBA19E9B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D820C6BD-DC19-4337-8DBE-F7DFBA19E9B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D820C6BD-DC19-4337-8DBE-F7DFBA19E9B3}.Debug|x64.ActiveCfg = Debug|Any CPU
