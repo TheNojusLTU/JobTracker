@@ -40,6 +40,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager();
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
 builder.Services.AddAuthorization();
