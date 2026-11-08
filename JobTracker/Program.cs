@@ -25,6 +25,8 @@ builder.Services.AddProblemDetails(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<JobApplicationService>();
+builder.Services.AddScoped<CsvApplicationImportService>();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
