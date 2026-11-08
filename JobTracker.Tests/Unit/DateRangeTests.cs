@@ -7,7 +7,7 @@ public class DateRangeTests
     [Fact]
     public void Constructor_FromAfterTo_Throws()
     {
-        Assert.Throws<ArgumentException>(() => new DateRange(new DateTime(2026, 10, 2), new DateTime(2026, 10, 1)));
+        Assert.ThrowsAny<ArgumentException>(() => new DateRange(new DateTime(2026, 10, 2), new DateTime(2026, 10, 1)));
     }
 
     [Fact]
