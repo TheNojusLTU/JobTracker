@@ -1,6 +1,7 @@
+using JobTracker.Contracts;
 using Microsoft.EntityFrameworkCore;
 
-namespace JobTracker.Api;
+namespace JobTracker.Extensions;
 
 public static class PagingExtensions
 {

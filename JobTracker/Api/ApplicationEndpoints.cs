@@ -3,10 +3,10 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.VisualBasic.FileIO;
+using JobTracker.Contracts;
 using JobTracker.Data;
 using JobTracker.Extensions;
 using JobTracker.Models;
-using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,19 +27,7 @@ public static class ApplicationEndpoints
             .WithName("GetApplication");
 
         // same CSRF check as the auth POSTs, only for requests that change data
-        var writes = group.MapGroup("");
-        writes.AddEndpointFilter(async (context, next) =>
-        {
-            var antiforgery = context.HttpContext.RequestServices.GetRequiredService<IAntiforgery>();
-            if (!await antiforgery.IsRequestValidAsync(context.HttpContext))
-            {
-                return Results.Problem(statusCode: StatusCodes.Status400BadRequest,
-                    title: "Invalid CSRF token.",
-                    detail: "Get /api/auth/csrf and send its request token in the X-CSRF-TOKEN header with the companion cookie.");
-            }
-
-            return await next(context);
-        });
+        var writes = group.MapGroup("").AddEndpointFilter<CsrfEndpointFilter>();
 
         writes.MapPost("/", CreateApplication)
             .WithName("CreateApplication");

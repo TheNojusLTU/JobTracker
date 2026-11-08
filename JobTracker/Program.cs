@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using JobTracker.Api;
-using JobTracker.Auth;
 using JobTracker.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

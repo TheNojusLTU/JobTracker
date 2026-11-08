@@ -1,29 +1,6 @@
 using JobTracker.Models;
 
-namespace JobTracker.Api;
-
-public record ApplicationResponse(
-    int Id,
-    string CompanyName,
-    string JobTitle,
-    string? Location,
-    decimal? Salary,
-    string? JobUrl,
-    DateTime ApplicationDate,
-    ApplicationStatus Status,
-    string? Notes)
-{
-    public static ApplicationResponse From(JobApplication application) => new(
-        application.Id,
-        application.CompanyName,
-        application.JobTitle,
-        application.Location,
-        application.Salary,
-        application.JobUrl,
-        application.ApplicationDate,
-        application.Status,
-        application.Notes);
-}
+namespace JobTracker.Contracts;
 
 public record ApplicationRequest(
     string? CompanyName,
@@ -105,5 +82,3 @@ public record ApplicationRequest(
         Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
         (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 }
-
-public sealed record ApplicationImportResponse(int ImportedCount);

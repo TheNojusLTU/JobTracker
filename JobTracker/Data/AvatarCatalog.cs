@@ -1,7 +1,5 @@
 namespace JobTracker.Data;
 
-public sealed record AvatarOption(string Key, string Label, string ImagePath);
-
 public static class AvatarCatalog
 {
     public static IReadOnlyList<AvatarOption> All { get; } =
