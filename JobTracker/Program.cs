@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using JobTracker.Api;
 using JobTracker.Data;
+using JobTracker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +24,8 @@ builder.Services.AddProblemDetails(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IApplicationService, ApplicationService>();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
