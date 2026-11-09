@@ -144,18 +144,38 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   }
 }
 
+export type ApplicationFilters = {
+  search: string
+  status: ApplicationStatus | ''
+  location: string
+  from: string
+  to: string
+  newestFirst: boolean
+}
+
+export const emptyFilters: ApplicationFilters = {
+  search: '',
+  status: '',
+  location: '',
+  from: '',
+  to: '',
+  newestFirst: true,
+}
+
 export async function getApplications(
   page: number,
-  search: string,
-  status: ApplicationStatus | '',
+  filters: ApplicationFilters,
 ): Promise<PagedResponse<JobApplication>> {
   const query = new URLSearchParams({
     page: String(page),
     pageSize: '20',
-    newestFirst: 'true',
+    newestFirst: String(filters.newestFirst),
   })
-  if (search.trim()) query.set('search', search.trim())
-  if (status) query.set('status', status)
+  if (filters.search.trim()) query.set('search', filters.search.trim())
+  if (filters.status) query.set('status', filters.status)
+  if (filters.location.trim()) query.set('location', filters.location.trim())
+  if (filters.from) query.set('from', filters.from)
+  if (filters.to) query.set('to', filters.to)
   return apiRequest<PagedResponse<JobApplication>>(`/api/applications/?${query}`)
 }
 

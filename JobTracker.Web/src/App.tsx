@@ -5,12 +5,14 @@ import {
   ApiError,
   apiRequest,
   createApplication,
+  emptyFilters,
   getApplication,
   getApplications,
   getCurrentUser,
   importApplications,
   refreshCsrfToken,
   updateApplication,
+  type ApplicationFilters,
   type ApplicationRequest,
   type ApplicationStatus,
   type AuthUser,
@@ -88,10 +90,16 @@ function App() {
   const [applicationsLoading, setApplicationsLoading] = useState(false)
   const [applicationsError, setApplicationsError] = useState('')
   const [page, setPage] = useState(1)
-  const [searchInput, setSearchInput] = useState('')
-  const [statusInput, setStatusInput] = useState<ApplicationStatus | ''>('')
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | ''>('')
+  const [filterInput, setFilterInput] = useState<ApplicationFilters>(emptyFilters)
+  const [filters, setFilters] = useState<ApplicationFilters>(emptyFilters)
+  const hasFilters = filters.search !== '' || filters.status !== '' || filters.location !== ''
+    || filters.from !== '' || filters.to !== ''
+  const [filterError, setFilterError] = useState('')
+  const resetFilters = () => {
+    setFilterError('')
+    setFilterInput(emptyFilters)
+    setFilters(emptyFilters)
+  }
   const [refreshCount, setRefreshCount] = useState(0)
   const [draft, setDraft] = useState<ApplicationDraft | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -137,7 +145,7 @@ function App() {
       setApplicationsLoading(true)
       setApplicationsError('')
       try {
-        const result = await getApplications(page, search, statusFilter)
+        const result = await getApplications(page, filters)
         if (active) setApplications(result)
       } catch (error) {
         if (!active) return
@@ -158,7 +166,7 @@ function App() {
     return () => {
       active = false
     }
-  }, [user, page, search, statusFilter, refreshCount])
+  }, [user, page, filters, refreshCount])
 
   const navigate = (nextMode: AuthMode | 'home') => {
     const path = nextMode === 'home' ? '/' : `/${nextMode}`
@@ -170,10 +178,7 @@ function App() {
     setSessionError('')
     setUser(authenticatedUser)
     setPage(1)
-    setSearchInput('')
-    setStatusInput('')
-    setSearch('')
-    setStatusFilter('')
+    resetFilters()
     window.history.pushState({}, '', '/')
     try {
       await refreshCsrfToken()
@@ -189,10 +194,7 @@ function App() {
       setUser(null)
       setApplications(null)
       setDraft(null)
-      setSearchInput('')
-      setStatusInput('')
-      setSearch('')
-      setStatusFilter('')
+      resetFilters()
       setPage(1)
       navigate('login')
       try {
@@ -259,10 +261,7 @@ function App() {
     try {
       if (editingId === null) {
         await createApplication(requestFrom(draft))
-        setSearchInput('')
-        setStatusInput('')
-        setSearch('')
-        setStatusFilter('')
+        resetFilters()
       } else {
         await updateApplication(editingId, requestFrom(draft))
       }
@@ -284,10 +283,7 @@ function App() {
     try {
       const result = await importApplications(file)
       setImportMessage(`Imported ${result.importedCount} ${result.importedCount === 1 ? 'application' : 'applications'}.`)
-      setSearchInput('')
-      setStatusInput('')
-      setSearch('')
-      setStatusFilter('')
+      resetFilters()
       setPage(1)
       setRefreshCount((count) => count + 1)
     } catch (error) {
@@ -336,9 +332,18 @@ function App() {
 
   const applyFilters = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (filterInput.from && filterInput.to && filterInput.from > filterInput.to) {
+      setFilterError('"Applied from" must not be later than "Applied to".')
+      return
+    }
+    setFilterError('')
     setPage(1)
-    setSearch(searchInput)
-    setStatusFilter(statusInput)
+    setFilters(filterInput)
+  }
+
+  const clearFilters = () => {
+    resetFilters()
+    setPage(1)
   }
 
   if (sessionLoading) {
@@ -465,30 +470,70 @@ function App() {
               <label className="filter-search">
                 <span className="visually-hidden">Search applications</span>
                 <input
-                  onChange={(event) => setSearchInput(event.target.value)}
+                  onChange={(event) => setFilterInput((current) => ({ ...current, search: event.target.value }))}
                   placeholder="Search company or job title"
-                  value={searchInput}
+                  value={filterInput.search}
                 />
               </label>
               <label className="filter-status">
                 <span className="visually-hidden">Filter by status</span>
-                <select value={statusInput} onChange={(event) => setStatusInput(event.target.value as ApplicationStatus | '')}>
+                <select value={filterInput.status} onChange={(event) => setFilterInput((current) => ({ ...current, status: event.target.value as ApplicationStatus | '' }))}>
                   <option value="">All statuses</option>
                   {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
                 </select>
               </label>
+              <label className="filter-status">
+                <span className="visually-hidden">Filter by location</span>
+                <input
+                  onChange={(event) => setFilterInput((current) => ({ ...current, location: event.target.value }))}
+                  placeholder="Location"
+                  value={filterInput.location}
+                />
+              </label>
+              <label className="filter-status">
+                <span className="visually-hidden">Applied from</span>
+                <input
+                  aria-label="Applied from"
+                  onChange={(event) => setFilterInput((current) => ({ ...current, from: event.target.value }))}
+                  title="Applied from"
+                  type="date"
+                  value={filterInput.from}
+                />
+              </label>
+              <label className="filter-status">
+                <span className="visually-hidden">Applied to</span>
+                <input
+                  aria-label="Applied to"
+                  onChange={(event) => setFilterInput((current) => ({ ...current, to: event.target.value }))}
+                  title="Applied to"
+                  type="date"
+                  value={filterInput.to}
+                />
+              </label>
+              <label className="filter-status">
+                <span className="visually-hidden">Sort order</span>
+                <select
+                  onChange={(event) => setFilterInput((current) => ({ ...current, newestFirst: event.target.value === 'newest' }))}
+                  value={filterInput.newestFirst ? 'newest' : 'oldest'}
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                </select>
+              </label>
               <button className="filter-button" type="submit">Filter</button>
+              <button className="filter-button" onClick={clearFilters} type="button">Clear</button>
             </form>
 
+            {filterError && <p className="notice-error" role="alert">{filterError}</p>}
             {applicationsError && <p className="notice-error" role="alert">{applicationsError}</p>}
             {applicationsLoading && <p className="list-message" aria-live="polite">Loading applications…</p>}
 
             {!applicationsLoading && applications && applications.items.length === 0 && (
               <div className="empty-state">
                 <span className="empty-mark" aria-hidden="true">+</span>
-                <h3>{search || statusFilter ? 'No matching applications' : 'Your list starts here'}</h3>
-                <p>{search || statusFilter ? 'Try changing your search or status filter.' : 'Add your first role to keep your job search organized.'}</p>
-                {!search && !statusFilter && <button className="text-button" type="button" onClick={openCreateForm}>Add your first application</button>}
+                <h3>{hasFilters ? 'No matching applications' : 'Your list starts here'}</h3>
+                <p>{hasFilters ? 'Try changing your search or filters.' : 'Add your first role to keep your job search organized.'}</p>
+                {!hasFilters &&  <button className="text-button" type="button" onClick={openCreateForm}>Add your first application</button>}
               </div>
             )}
 
