@@ -1,4 +1,5 @@
 using JobTracker.Data;
+using JobTracker.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,8 @@ public sealed class JobTrackerFactory : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
             services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase(databaseName));
+            services.RemoveAll<IImportConcurrencyGuard>();
+            services.AddSingleton<IImportConcurrencyGuard, InMemoryImportConcurrencyGuard>();
         });
     }
 }

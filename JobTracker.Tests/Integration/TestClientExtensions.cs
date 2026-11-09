@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using JobTracker.Auth;
+using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace JobTracker.Tests.Integration;
 
@@ -14,7 +15,7 @@ public static class TestClientExtensions
         Converters = { new JsonStringEnumConverter() }
     };
 
-    public static async Task<(HttpClient Client, string Username)> CreateUserClientAsync(this JobTrackerFactory factory)
+    public static async Task<(HttpClient Client, string Username)> CreateUserClientAsync(this WebApplicationFactory<Program> factory)
     {
         var client = factory.CreateClient();
         var username = "user" + Guid.NewGuid().ToString("N")[..8];
