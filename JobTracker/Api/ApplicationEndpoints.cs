@@ -79,6 +79,14 @@ public static class ApplicationEndpoints
             GetUserId(user),
             cancellationToken);
 
+        if (result.IsImportInProgress)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "A CSV import is already in progress.",
+                detail: "Wait for the current import to finish, then try again.");
+        }
+
         if (result.IsFileTooLarge)
         {
             return Results.Problem(

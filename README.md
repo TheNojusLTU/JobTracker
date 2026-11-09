@@ -54,6 +54,8 @@ Database models and migrations are preserved. Cookie authentication APIs are imp
 
 The React application list also supports importing CSV files through `POST /api/applications/import`. The CSV must have these columns, in order: `CompanyName,JobTitle,Location,Salary,JobUrl,ApplicationDate,Status,Notes`. Use `YYYY-MM-DD` dates, invariant decimal notation, and a valid status name; optional values may be left blank. Imports are limited to 1 MB and 500 rows and are all-or-nothing.
 
+Only one CSV import per user may run at a time, including across API instances using the same PostgreSQL database. An overlapping request receives HTTP 409 Problem Details; retry after the first import finishes. Different users may import concurrently. The guard does not prevent duplicate imports submitted after a prior import completes. A transaction and database connection remain open while the request is read and processed, so configure appropriate upload and database idle-in-transaction timeouts. The advisory-lock key is a stable 64-bit hash of the user ID; a hash collision could exceptionally reject an unrelated user's import.
+
 ## Checks
 
 ```bash
@@ -61,3 +63,5 @@ dotnet build
 npm --prefix JobTracker.Web run lint
 npm --prefix JobTracker.Web run build
 ```
+
+PostgreSQL-specific import concurrency tests require a **disposable, empty database**. Set `JOBTRACKER_TEST_POSTGRES` to its connection string before running `dotnet test`; the tests create tables and test users in that database. Without this setting those tests are skipped, unless `JOBTRACKER_REQUIRE_POSTGRES_TESTS` is `true`, in which case they fail instead. CI starts a disposable PostgreSQL service and requires these tests.

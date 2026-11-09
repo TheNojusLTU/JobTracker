@@ -27,6 +27,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<JobApplicationService>();
 builder.Services.AddScoped<CsvApplicationImportService>();
+builder.Services.AddScoped<IImportConcurrencyGuard, PostgresImportConcurrencyGuard>();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
