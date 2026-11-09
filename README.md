@@ -17,12 +17,6 @@ Run commands from the repository root. Start PostgreSQL and create a database na
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=jobtracker;Username=postgres;Password=YOUR_LOCAL_PASSWORD" --project JobTracker/JobTracker.csproj
 ```
 
-Apply the existing database migrations:
-
-```bash
-dotnet ef database update --project JobTracker/JobTracker.csproj --startup-project JobTracker/JobTracker.csproj
-```
-
 Keep database credentials out of the repository.
 
 ## Run
@@ -32,6 +26,13 @@ Start the API:
 ```bash
 dotnet run --project JobTracker/JobTracker.csproj --launch-profile http
 ```
+
+The API applies pending EF Core migrations before accepting requests in every environment.
+Restarting an up-to-date database preserves its data and does not reapply migrations.
+The database user must have permission to update the schema. If the database is
+unavailable or a migration fails, the API logs the failure and exits without starting.
+Creating new migrations still requires `dotnet ef migrations add`; running
+`dotnet ef database update` manually is no longer needed for startup.
 
 Start the frontend in another terminal:
 
