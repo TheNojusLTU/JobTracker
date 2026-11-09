@@ -51,7 +51,8 @@ public static class ApplicationEndpoints
     private static async Task<IResult> ImportApplications(
         HttpContext context,
         ClaimsPrincipal user,
-        CsvApplicationImportService importService)
+        CsvApplicationImportService importService,
+        CancellationToken cancellationToken)
     {
         if (context.Request.ContentType?.StartsWith("text/csv", StringComparison.OrdinalIgnoreCase) != true)
         {
@@ -76,7 +77,7 @@ public static class ApplicationEndpoints
         var result = await importService.ImportAsync(
             context.Request.Body,
             GetUserId(user),
-            context.RequestAborted);
+            cancellationToken);
 
         if (result.IsImportInProgress)
         {
@@ -99,9 +100,9 @@ public static class ApplicationEndpoints
     }
 
     public static async Task<Results<Ok<PagedResponse<ApplicationResponse>>, ValidationProblem>> GetApplications(
-        HttpContext context,
         ClaimsPrincipal user,
         JobApplicationService service,
+        CancellationToken cancellationToken,
         string? search = null,
         ApplicationStatus? status = null,
         string? location = null,
@@ -136,19 +137,19 @@ public static class ApplicationEndpoints
             newestFirst,
             page,
             pageSize,
-            context.RequestAborted);
+            cancellationToken);
 
         return TypedResults.Ok(result);
     }
 
     public static async Task<Results<Ok<ApplicationResponse>, NotFound>> GetApplication(
         int id,
-        HttpContext context,
         ClaimsPrincipal user,
-        JobApplicationService service)
+        JobApplicationService service,
+        CancellationToken cancellationToken)
     {
         var application = await service.GetApplicationAsync(
-            id, GetUserId(user), context.RequestAborted);
+            id, GetUserId(user), cancellationToken);
 
         return application is null
             ? TypedResults.NotFound()
@@ -157,9 +158,9 @@ public static class ApplicationEndpoints
 
     public static async Task<Results<Created<ApplicationResponse>, ValidationProblem>> CreateApplication(
         ApplicationRequest request,
-        HttpContext context,
         ClaimsPrincipal user,
-        JobApplicationService service)
+        JobApplicationService service,
+        CancellationToken cancellationToken)
     {
         var errors = request.Validate();
         if (errors.Count > 0)
@@ -168,7 +169,7 @@ public static class ApplicationEndpoints
         }
 
         var application = await service.CreateApplicationAsync(
-            request, GetUserId(user), context.RequestAborted);
+            request, GetUserId(user), cancellationToken);
 
         return TypedResults.Created($"/api/applications/{application.Id}", application);
     }
@@ -176,9 +177,9 @@ public static class ApplicationEndpoints
     public static async Task<Results<Ok<ApplicationResponse>, NotFound, ValidationProblem>> UpdateApplication(
         int id,
         ApplicationRequest request,
-        HttpContext context,
         ClaimsPrincipal user,
-        JobApplicationService service)
+        JobApplicationService service,
+        CancellationToken cancellationToken)
     {
         var errors = request.Validate(requireStatus: true);
         if (errors.Count > 0)
@@ -187,7 +188,7 @@ public static class ApplicationEndpoints
         }
 
         var application = await service.UpdateApplicationAsync(
-            id, request, GetUserId(user), context.RequestAborted);
+            id, request, GetUserId(user), cancellationToken);
 
         return application is null
             ? TypedResults.NotFound()
@@ -196,12 +197,12 @@ public static class ApplicationEndpoints
 
     public static async Task<Results<NoContent, NotFound>> DeleteApplication(
         int id,
-        HttpContext context,
         ClaimsPrincipal user,
-        JobApplicationService service)
+        JobApplicationService service,
+        CancellationToken cancellationToken)
     {
         var deleted = await service.DeleteApplicationAsync(
-            id, GetUserId(user), context.RequestAborted);
+            id, GetUserId(user), cancellationToken);
 
         return deleted
             ? TypedResults.NoContent()
