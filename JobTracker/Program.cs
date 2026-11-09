@@ -74,6 +74,23 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
+// Finish schema updates before the host starts accepting requests.
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    try
+    {
+        app.Logger.LogInformation("Applying database migrations.");
+        await db.Database.MigrateAsync();
+        app.Logger.LogInformation("Database migrations completed.");
+    }
+    catch (Exception exception)
+    {
+        app.Logger.LogCritical(exception, "Database migration failed; application startup aborted.");
+        throw;
+    }
+}
+
 // Use Problem Details for unhandled exceptions and empty error responses in every environment.
 app.UseExceptionHandler();
 app.UseStatusCodePages();
