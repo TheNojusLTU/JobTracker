@@ -94,7 +94,9 @@ function App() {
   const [filters, setFilters] = useState<ApplicationFilters>(emptyFilters)
   const hasFilters = filters.search !== '' || filters.status !== '' || filters.location !== ''
     || filters.from !== '' || filters.to !== ''
+  const [filterError, setFilterError] = useState('')
   const resetFilters = () => {
+    setFilterError('')
     setFilterInput(emptyFilters)
     setFilters(emptyFilters)
   }
@@ -330,6 +332,11 @@ function App() {
 
   const applyFilters = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (filterInput.from && filterInput.to && filterInput.from > filterInput.to) {
+      setFilterError('"Applied from" must not be later than "Applied to".')
+      return
+    }
+    setFilterError('')
     setPage(1)
     setFilters(filterInput)
   }
@@ -517,6 +524,7 @@ function App() {
               <button className="filter-button" onClick={clearFilters} type="button">Clear</button>
             </form>
 
+            {filterError && <p className="notice-error" role="alert">{filterError}</p>}
             {applicationsError && <p className="notice-error" role="alert">{applicationsError}</p>}
             {applicationsLoading && <p className="list-message" aria-live="polite">Loading applications…</p>}
 
