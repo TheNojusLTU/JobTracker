@@ -8,7 +8,9 @@ using Microsoft.VisualBasic.FileIO;
 
 namespace JobTracker.Services;
 
-public sealed class CsvApplicationImportService(ApplicationDbContext dbContext)
+public sealed class CsvApplicationImportService(
+    ApplicationDbContext dbContext,
+    IImportConcurrencyGuard concurrencyGuard)
 {
     public const long MaxImportBytes = 1_048_576;
     private const int MaxImportRows = 500;
@@ -23,6 +25,12 @@ public sealed class CsvApplicationImportService(ApplicationDbContext dbContext)
         string userId,
         CancellationToken cancellationToken)
     {
+        await using var lease = await concurrencyGuard.TryAcquireAsync(userId, cancellationToken);
+        if (lease is null)
+        {
+            return CsvApplicationImportResult.ImportInProgress();
+        }
+
         var content = await ReadLimitedAsync(csvStream, cancellationToken);
         if (content is null)
         {
@@ -39,7 +47,13 @@ public sealed class CsvApplicationImportService(ApplicationDbContext dbContext)
 
         try
         {
-            return await ParseAndSaveAsync(parser, userId, cancellationToken);
+            var result = await ParseAndSaveAsync(parser, userId, cancellationToken);
+            if (result.ImportedCount is not null)
+            {
+                await lease.CommitAsync(cancellationToken);
+            }
+
+            return result;
         }
         catch (MalformedLineException)
         {

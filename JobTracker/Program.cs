@@ -27,6 +27,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<JobApplicationService>();
 builder.Services.AddScoped<CsvApplicationImportService>();
+builder.Services.AddScoped<IImportConcurrencyGuard, PostgresImportConcurrencyGuard>();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
@@ -40,6 +41,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager();
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
 builder.Services.AddAuthorization();
@@ -78,16 +80,20 @@ var app = builder.Build();
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    try
+    // The integration test host uses EF's non-relational in-memory provider.
+    if (db.Database.IsRelational())
     {
-        app.Logger.LogInformation("Applying database migrations.");
-        await db.Database.MigrateAsync();
-        app.Logger.LogInformation("Database migrations completed.");
-    }
-    catch (Exception exception)
-    {
-        app.Logger.LogCritical(exception, "Database migration failed; application startup aborted.");
-        throw;
+        try
+        {
+            app.Logger.LogInformation("Applying database migrations.");
+            await db.Database.MigrateAsync();
+            app.Logger.LogInformation("Database migrations completed.");
+        }
+        catch (Exception exception)
+        {
+            app.Logger.LogCritical(exception, "Database migration failed; application startup aborted.");
+            throw;
+        }
     }
 }
 
