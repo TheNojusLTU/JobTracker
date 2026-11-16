@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using JobTracker.Api;
 using JobTracker.Auth;
 using JobTracker.Data;
+using JobTracker.Filters;
 using JobTracker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +13,10 @@ builder.Services.AddOpenApi();
 builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = false);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddScoped<ValidateCsrfTokenFilter>();
 builder.Services.AddProblemDetails(options =>
 {
     options.CustomizeProblemDetails = context =>
@@ -25,8 +29,8 @@ builder.Services.AddProblemDetails(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<JobApplicationService>();
-builder.Services.AddScoped<CsvApplicationImportService>();
+builder.Services.AddScoped<IJobApplicationService, JobApplicationService>();
+builder.Services.AddScoped<ICsvApplicationImportService, CsvApplicationImportService>();
 builder.Services.AddScoped<IImportConcurrencyGuard, PostgresImportConcurrencyGuard>();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
@@ -41,7 +45,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager();
-builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
 builder.Services.AddAuthorization();
@@ -124,6 +128,6 @@ app.MapGet("/api/health", () => TypedResults.Ok(new { status = "healthy" }))
     .WithDescription("Liveness only; does not connect to PostgreSQL or check other dependencies.")
     .AllowAnonymous();
 
-app.MapApplicationEndpoints();
+app.MapControllers();
 
 app.Run();

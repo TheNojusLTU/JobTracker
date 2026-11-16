@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JobTracker.Services;
 
-public sealed class JobApplicationService(ApplicationDbContext dbContext)
+public sealed class JobApplicationService(ApplicationDbContext dbContext) : IJobApplicationService
 {
     public async Task<PagedResponse<ApplicationResponse>> GetApplicationsAsync(
         string userId,

@@ -59,8 +59,18 @@ Only one CSV import per user may run at a time, including across API instances u
 
 ## Checks
 
+Application routes are implemented in `JobTracker/Controllers/ApplicationsController.cs`.
+The controller receives application and CSV import service interfaces through its
+constructor; authentication endpoints use `IAuthService`. Implementations are
+registered in `Program.cs`.
+
+`JobTracker.Tests` mirrors the backend folders (`Api`, `Auth`, `Controllers`, `Data`,
+`Extensions`, `Models`, and `Services`). Shared fixtures and HTTP helpers live in
+`TestSupport`; controller and endpoint tests exercise the API through HTTP.
+
 ```bash
 dotnet build
+dotnet test
 npm --prefix JobTracker.Web run lint
 npm --prefix JobTracker.Web run build
 ```

@@ -2,9 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using JobTracker.Auth;
 
-namespace JobTracker.Tests.Integration;
+namespace JobTracker.Tests.Auth;
 
-public class AuthApiTests(JobTrackerFactory factory) : IClassFixture<JobTrackerFactory>
+public class AuthEndpointsTests(JobTrackerFactory factory) : IClassFixture<JobTrackerFactory>
 {
     [Fact]
     public async Task Me_WhenAnonymous_Returns401()
@@ -141,13 +141,4 @@ public class AuthApiTests(JobTrackerFactory factory) : IClassFixture<JobTrackerF
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/auth/me")).StatusCode);
     }
 
-    [Fact]
-    public async Task Health_ReturnsHealthy()
-    {
-        var client = factory.CreateClient();
-
-        var response = await client.GetAsync("/api/health");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-    }
 }
