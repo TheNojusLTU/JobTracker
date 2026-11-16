@@ -1,6 +1,6 @@
 using JobTracker.Services;
 
-namespace JobTracker.Tests.Integration;
+namespace JobTracker.Tests.TestSupport;
 
 public sealed class InMemoryImportConcurrencyGuard : IImportConcurrencyGuard
 {

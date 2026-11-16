@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace JobTracker.Tests.Integration;
+namespace JobTracker.Tests.TestSupport;
 
 public sealed class JobTrackerFactory : WebApplicationFactory<Program>
 {
