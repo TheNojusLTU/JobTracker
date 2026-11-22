@@ -774,6 +774,33 @@
   font-size: 0.78rem;
 }
 
+.application-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.application-flag {
+  border: 1px solid #a0afa5;
+  border-radius: 5px;
+  padding: 5px 8px;
+  background: #fff;
+  color: #285247;
+  font: inherit;
+  cursor: pointer;
+}
+
+.application-flag[aria-pressed='true'] {
+  border-color: #285247;
+  background: #285247;
+  color: #fff;
+}
+
+.application-flag:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .application-actions {
   text-align: right;
 }

@@ -14,7 +14,9 @@ import {
   importApplications,
   refreshCsrfToken,
   updateApplication,
+  updateApplicationFlags,
   type ApplicationFilters,
+  type ApplicationFlags,
   type ApplicationRequest,
   type ApplicationStatus,
   type AuthUser,
@@ -95,7 +97,7 @@ function App() {
   const [filterInput, setFilterInput] = useState<ApplicationFilters>(emptyFilters)
   const [filters, setFilters] = useState<ApplicationFilters>(emptyFilters)
   const hasFilters = filters.search !== '' || filters.status !== '' || filters.location !== ''
-    || filters.from !== '' || filters.to !== ''
+    || filters.from !== '' || filters.to !== '' || filters.priority !== ''
   const [filterError, setFilterError] = useState('')
   const resetFilters = () => {
     setFilterError('')
@@ -110,6 +112,7 @@ function App() {
   const [loadingEditId, setLoadingEditId] = useState<number | null>(null)
   const [changingStatusId, setChangingStatusId] = useState<number | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [updatingFlags, setUpdatingFlags] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importMessage, setImportMessage] = useState('')
   const [importError, setImportError] = useState('')
@@ -149,7 +152,13 @@ function App() {
       setApplicationsError('')
       try {
         const result = await getApplications(page, filters)
-        if (active) setApplications(result)
+        if (!active) return
+        const lastPage = Math.max(1, result.totalPages)
+        if (page > lastPage) {
+          setPage(lastPage)
+        } else {
+          setApplications(result)
+        }
       } catch (error) {
         if (!active) return
         if (error instanceof ApiError && error.status === 401) {
@@ -360,6 +369,26 @@ function App() {
     }
   }
 
+  const handleFlagChange = async (id: number, flags: ApplicationFlags) => {
+    setApplicationsError('')
+    setUpdatingFlags(true)
+    try {
+      await updateApplicationFlags(id, flags)
+      setRefreshCount((count) => count + 1)
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        setApplications(null)
+        setDraft(null)
+        setUser(null)
+        setSessionError('Your session has expired. Please sign in again.')
+      } else {
+        setApplicationsError(error instanceof Error ? error.message : 'Unable to update application flags.')
+      }
+    } finally {
+      setUpdatingFlags(false)
+    }
+  }
+
   const applyFilters = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (filterInput.from && filterInput.to && filterInput.from > filterInput.to) {
@@ -500,6 +529,17 @@ function App() {
                 </select>
               </label>
               <label className="filter-status">
+                <span className="visually-hidden">Filter by priority</span>
+                <select
+                  value={filterInput.priority}
+                  onChange={(event) => setFilterInput((current) => ({ ...current, priority: event.target.value as ApplicationFilters['priority'] }))}
+                >
+                  <option value="">Any priority</option>
+                  <option value="true">Priority only</option>
+                  <option value="false">Non-priority only</option>
+                </select>
+              </label>
+              <label className="filter-status">
                 <span className="visually-hidden">Filter by location</span>
                 <input
                   onChange={(event) => setFilterInput((current) => ({ ...current, location: event.target.value }))}
@@ -563,6 +603,7 @@ function App() {
                         <th scope="col">Role</th>
                         <th scope="col">Applied</th>
                         <th scope="col">Status</th>
+                        <th scope="col">Flags</th>
                         <th scope="col"><span className="visually-hidden">Actions</span></th>
                       </tr>
                     </thead>
@@ -585,6 +626,30 @@ function App() {
                                 {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
                               </select>
                             </label>
+                          </td>
+                          <td>
+                            <div className="application-flags">
+                              <button
+                                aria-label={`Favorite ${application.jobTitle} at ${application.companyName}`}
+                                aria-pressed={application.isFavorite}
+                                className="application-flag"
+                                disabled={updatingFlags}
+                                onClick={() => void handleFlagChange(application.id, { isFavorite: !application.isFavorite })}
+                                type="button"
+                              >
+                                Favorite
+                              </button>
+                              <button
+                                aria-label={`Priority for ${application.jobTitle} at ${application.companyName}`}
+                                aria-pressed={application.isPriority}
+                                className="application-flag"
+                                disabled={updatingFlags}
+                                onClick={() => void handleFlagChange(application.id, { isPriority: !application.isPriority })}
+                                type="button"
+                              >
+                                Priority
+                              </button>
+                            </div>
                           </td>
                           <td className="application-actions">
                             <button

@@ -18,9 +18,13 @@ export type JobApplication = {
   applicationDate: string
   status: ApplicationStatus
   notes: string | null
+  isFavorite: boolean
+  isPriority: boolean
 }
 
-export type ApplicationRequest = Omit<JobApplication, 'id'>
+export type ApplicationRequest = Omit<JobApplication, 'id' | 'isFavorite' | 'isPriority'>
+
+export type ApplicationFlags = Partial<Pick<JobApplication, 'isFavorite' | 'isPriority'>>
 
 export type PagedResponse<T> = {
   items: T[]
@@ -102,7 +106,7 @@ export async function refreshCsrfToken(): Promise<void> {
 }
 
 export type ApiRequestOptions = {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: object | Blob
   contentType?: string
 }
@@ -160,6 +164,7 @@ export type ApplicationFilters = {
   location: string
   from: string
   to: string
+  priority: '' | 'true' | 'false'
   newestFirst: boolean
 }
 
@@ -169,6 +174,7 @@ export const emptyFilters: ApplicationFilters = {
   location: '',
   from: '',
   to: '',
+  priority: '',
   newestFirst: true,
 }
 
@@ -186,6 +192,7 @@ export async function getApplications(
   if (filters.location.trim()) query.set('location', filters.location.trim())
   if (filters.from) query.set('from', filters.from)
   if (filters.to) query.set('to', filters.to)
+  if (filters.priority) query.set('priority', filters.priority)
   return apiRequest<PagedResponse<JobApplication>>(`/api/applications/?${query}`)
 }
 
@@ -218,4 +225,8 @@ export async function importApplications(file: File): Promise<ApplicationImportR
     body: file,
     contentType: 'text/csv',
   })
+}
+
+export function updateApplicationFlags(id: number, flags: ApplicationFlags): Promise<void> {
+  return apiRequest<void>(`/api/applications/${id}/flags`, { method: 'PATCH', body: flags })
 }

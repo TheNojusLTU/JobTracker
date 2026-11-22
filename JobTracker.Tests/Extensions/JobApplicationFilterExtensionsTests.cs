@@ -35,6 +35,19 @@ public class JobApplicationFilterExtensionsTests
     }
 
     [Fact]
+    public void Filter_ByPriority_CombinesWithStatusAndSupportsEitherValue()
+    {
+        var applications = Applications;
+        applications[0].IsPriority = true;
+        applications[1].IsPriority = true;
+
+        Assert.Equal([1, 2], Ids(applications.Filter(priority: true)));
+        Assert.Equal([3, 4], Ids(applications.Filter(priority: false)));
+        Assert.Equal([1], Ids(applications.Filter(status: ApplicationStatus.Applied, priority: true)));
+        Assert.Equal([1, 2, 3, 4], Ids(applications.Filter(priority: null)));
+    }
+
+    [Fact]
     public void Filter_WithNoConditions_ReturnsEverything()
     {
         Assert.Equal([1, 2, 3, 4], Ids(Applications.Filter()));

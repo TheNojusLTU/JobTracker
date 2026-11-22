@@ -40,6 +40,7 @@ public sealed class ApplicationsController(
         [FromQuery] string? location = null,
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null,
+        [FromQuery] bool? priority = null,
         [FromQuery] bool newestFirst = true,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = PagingExtensions.DefaultPageSize)
@@ -61,7 +62,7 @@ public sealed class ApplicationsController(
         }
 
         var result = await applicationService.GetApplicationsAsync(
-            UserId, search, status, location, dates, newestFirst, page, pageSize, cancellationToken);
+            UserId, search, status, location, dates, priority, newestFirst, page, pageSize, cancellationToken);
         return Ok(result);
     }
 
@@ -105,6 +106,26 @@ public sealed class ApplicationsController(
 
         var application = await applicationService.UpdateApplicationAsync(id, request, UserId, cancellationToken);
         return application is null ? NotFound() : Ok(application);
+    }
+
+    [HttpPatch("{id:int}/flags", Name = "UpdateApplicationFlags")]
+    [EndpointSummary("Sets the favorite or priority flag on an owned application.")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateFlags(
+        int id, [FromBody] ApplicationFlagsRequest request, CancellationToken cancellationToken)
+    {
+        if (request.IsFavorite is null && request.IsPriority is null)
+        {
+            return InvalidRequest(new Dictionary<string, string[]>
+            {
+                ["flags"] = ["Provide isFavorite, isPriority, or both."]
+            });
+        }
+
+        var updated = await applicationService.UpdateFlagsAsync(id, request, UserId, cancellationToken);
+        return updated ? NoContent() : NotFound();
     }
 
     [HttpDelete("{id:int}", Name = "DeleteApplication")]

@@ -65,6 +65,10 @@ Interview and offer totals count each application that reached the corresponding
 
 On upgrade, existing applications get milestone credit for their current Interview or Offer status. Earlier transitions were not stored and cannot be recovered.
 
+## Favorites and priority
+
+The Favorite and Priority buttons in the application list toggle independent flags. Use the priority filter to show only priority or only non-priority applications. The API applies the filter before paginating the results.
+
 ## Checks
 
 Application routes are implemented in `JobTracker/Controllers/ApplicationsController.cs`.
