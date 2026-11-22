@@ -747,6 +747,7 @@
 
 .application-actions .text-button {
   font-size: 0.8rem;
+  margin-left: 12px;
 }
 
 .pagination {

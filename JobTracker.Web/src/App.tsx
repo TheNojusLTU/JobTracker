@@ -5,6 +5,7 @@ import {
   ApiError,
   apiRequest,
   createApplication,
+  deleteApplication,
   emptyFilters,
   getApplication,
   getApplications,
@@ -107,6 +108,7 @@ function App() {
   const [saving, setSaving] = useState(false)
   const [loadingEditId, setLoadingEditId] = useState<number | null>(null)
   const [changingStatusId, setChangingStatusId] = useState<number | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
   const [importing, setImporting] = useState(false)
   const [importMessage, setImportMessage] = useState('')
   const [importError, setImportError] = useState('')
@@ -327,6 +329,33 @@ function App() {
       }
     } finally {
       setChangingStatusId(null)
+    }
+  }
+
+  const handleDelete = async (application: JobApplication) => {
+    const confirmed = window.confirm(
+      `Delete your application for ${application.jobTitle} at ${application.companyName}?`
+    )
+
+    if (!confirmed) return
+
+    setApplicationsError('')
+    setDeletingId(application.id)
+
+    try {
+      await deleteApplication(application.id)
+
+      if (applications?.items.length === 1 && page > 1) {
+        setPage((current) => current - 1)
+      } else {
+        setRefreshCount((count) => count + 1)
+      }
+    } catch (error) {
+      setApplicationsError(
+        error instanceof Error ? error.message : 'Unable to delete application.'
+      )
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -577,6 +606,14 @@ function App() {
                               type="button"
                             >
                               {loadingEditId === application.id ? 'Loading…' : 'Edit'}
+                            </button>
+                            <button
+                              className="text-button"
+                              disabled={deletingId === application.id}
+                              onClick={() => void handleDelete(application)}
+                              type="button"
+                            >
+                              {deletingId === application.id ? 'Deleting…' : 'Delete'}
                             </button>
                           </td>
                         </tr>

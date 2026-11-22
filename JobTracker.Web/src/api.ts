@@ -194,6 +194,10 @@ export async function updateApplication(
   return apiRequest<JobApplication>(`/api/applications/${id}`, { method: 'PUT', body: request })
 }
 
+export async function deleteApplication(id: number): Promise<void> {
+  await apiRequest<void>(`/api/applications/${id}`, { method: 'DELETE'})
+}
+
 export async function importApplications(file: File): Promise<ApplicationImportResponse> {
   return apiRequest<ApplicationImportResponse>('/api/applications/import', {
     method: 'POST',
