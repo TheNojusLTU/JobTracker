@@ -62,6 +62,9 @@ public class ApplicationsControllerTests(JobTrackerFactory factory) : IClassFixt
         Assert.Equal(0, empty.TotalCount);
         Assert.Equal(Enum.GetValues<ApplicationStatus>().Length, empty.ByStatus.Count);
         Assert.All(empty.ByStatus.Values, count => Assert.Equal(0, count));
+        Assert.Empty(empty.ByMonth);
+        Assert.Null(empty.ApplicationToInterviewRate);
+        Assert.Null(empty.InterviewToOfferRate);
 
         var first = await CreateAsync(client, NewApplication(status: ApplicationStatus.Applied));
         await CreateAsync(client, NewApplication(status: ApplicationStatus.Applied));
@@ -81,6 +84,39 @@ public class ApplicationsControllerTests(JobTrackerFactory factory) : IClassFixt
         Assert.Equal(3, updated.TotalCount);
         Assert.Equal(1, updated.ByStatus[ApplicationStatus.Applied]);
         Assert.Equal(1, updated.ByStatus[ApplicationStatus.Offer]);
+    }
+
+    [Fact]
+    public async Task Statistics_GroupsMonthsAndPreservesRecordedMilestonesAfterStatusChanges()
+    {
+        var (client, _) = await factory.CreateUserClientAsync();
+        var interviewed = await CreateAsync(client, NewApplication(date: "2025-12-30", status: ApplicationStatus.Interview));
+        foreach (var status in new[] { ApplicationStatus.Offer, ApplicationStatus.Rejected })
+        {
+            var update = await client.SendWithCsrfAsync(HttpMethod.Put, $"/api/applications/{interviewed.Id}",
+                NewApplication(date: "2025-12-30", status: status));
+            Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        }
+
+        var import = await client.SendWithCsrfAsync(HttpMethod.Post, "/api/applications/import", new StringContent("""
+            CompanyName,JobTitle,Location,Salary,JobUrl,ApplicationDate,Status,Notes
+            Acme,Dev,,,,2026-01-02,Interview,
+            Globex,Dev,,,,2026-01-03,Offer,
+            """, Encoding.UTF8, "text/csv"));
+        Assert.Equal(HttpStatusCode.OK, import.StatusCode);
+        await CreateAsync(client, NewApplication(date: "2026-01-04", status: ApplicationStatus.Saved));
+
+        var summary = await client.GetFromJsonAsync<ApplicationStatisticsResponse>(
+            "/api/applications/statistics", TestClientExtensions.Json);
+
+        Assert.NotNull(summary);
+        Assert.Equal(new[] { new MonthlyApplicationCount(2026, 1, 3), new MonthlyApplicationCount(2025, 12, 1) }, summary.ByMonth);
+        Assert.Equal(1, summary.ByStatus[ApplicationStatus.Interview]);
+        Assert.Equal(1, summary.ByStatus[ApplicationStatus.Offer]);
+        Assert.Equal(2, summary.InterviewCount);
+        Assert.Equal(2, summary.OfferCount);
+        Assert.Equal(0.5m, summary.ApplicationToInterviewRate);
+        Assert.Equal(0.5m, summary.InterviewToOfferRate);
     }
 
     [Fact]

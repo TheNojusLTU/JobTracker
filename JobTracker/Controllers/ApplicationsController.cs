@@ -22,7 +22,7 @@ public sealed class ApplicationsController(
         ?? throw new InvalidOperationException("Authenticated user has no id claim.");
 
     [HttpGet("statistics", Name = "GetApplicationStatistics")]
-    [EndpointSummary("Counts all of the current user's applications by status.")]
+    [EndpointSummary("Summarizes the current user's applications by status and month, including interview and offer statistics.")]
     [ProducesResponseType<ApplicationStatisticsResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<ApplicationStatisticsResponse>> GetStatistics(CancellationToken cancellationToken)
     {

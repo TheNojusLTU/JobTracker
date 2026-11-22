@@ -37,6 +37,11 @@ export type ApplicationImportResponse = {
 export type ApplicationStatistics = {
   totalCount: number
   byStatus: Record<ApplicationStatus, number>
+  byMonth: { year: number; month: number; count: number }[]
+  interviewCount: number
+  offerCount: number
+  applicationToInterviewRate: number | null
+  interviewToOfferRate: number | null
 }
 
 type ApiProblem = {

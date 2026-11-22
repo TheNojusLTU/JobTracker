@@ -405,6 +405,14 @@
   font-weight: 500;
 }
 
+.application-summary h3 {
+  margin: 24px 0 12px;
+  color: #203a31;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
 .summary-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -440,6 +448,15 @@
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 1.8rem;
   font-weight: 500;
+}
+
+.applications-table.monthly-statistics {
+  min-width: 0;
+}
+
+.monthly-statistics th:last-child,
+.monthly-statistics td:last-child {
+  text-align: right;
 }
 
 .applications-section {
@@ -892,6 +909,10 @@
 
   .summary-total {
     grid-column: 1 / -1;
+  }
+
+  .conversion-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .summary-item {
