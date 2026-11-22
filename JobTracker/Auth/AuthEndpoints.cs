@@ -44,7 +44,7 @@ public static class AuthEndpoints
             .Produces<UserResponse>()
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized);
-        writes.MapPost("/logout", async (AuthService authService) =>
+        writes.MapPost("/logout", async (IAuthService authService) =>
         {
             await authService.LogoutAsync();
             return TypedResults.NoContent();
@@ -52,7 +52,7 @@ public static class AuthEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        auth.MapGet("/me", async (ClaimsPrincipal principal, AuthService authService) =>
+        auth.MapGet("/me", async (ClaimsPrincipal principal, IAuthService authService) =>
         {
             var user = await authService.GetCurrentUserAsync(principal);
             return user is null
@@ -63,7 +63,7 @@ public static class AuthEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized);
     }
 
-    private static async Task<IResult> RegisterAsync(RegisterRequest request, AuthService authService)
+    private static async Task<IResult> RegisterAsync(RegisterRequest request, IAuthService authService)
     {
         var result = await authService.RegisterAsync(request);
         return result.Status switch
@@ -75,7 +75,7 @@ public static class AuthEndpoints
         };
     }
 
-    private static async Task<IResult> LoginAsync(LoginRequest request, AuthService authService)
+    private static async Task<IResult> LoginAsync(LoginRequest request, IAuthService authService)
     {
         var result = await authService.LoginAsync(request);
         return result.Status switch

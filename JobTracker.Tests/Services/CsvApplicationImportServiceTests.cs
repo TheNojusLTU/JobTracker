@@ -12,21 +12,9 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace JobTracker.Tests.Integration;
+namespace JobTracker.Tests.Services;
 
-public sealed class PostgresFactAttribute : FactAttribute
-{
-    public PostgresFactAttribute()
-    {
-        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBTRACKER_TEST_POSTGRES")) &&
-            Environment.GetEnvironmentVariable("JOBTRACKER_REQUIRE_POSTGRES_TESTS") != "true")
-        {
-            Skip = "Set JOBTRACKER_TEST_POSTGRES to a disposable PostgreSQL database to run this test.";
-        }
-    }
-}
-
-public class PostgresImportTests
+public class CsvApplicationImportServiceTests
 {
     private const string Header = "CompanyName,JobTitle,Location,Salary,JobUrl,ApplicationDate,Status,Notes";
     private const string ValidCsv = Header + "\nAcme,Dev,,,,2026-10-01,,";
@@ -49,7 +37,7 @@ public class PostgresImportTests
         var userId = user!.Id;
 
         using var importScope = second.Services.CreateScope();
-        var importer = importScope.ServiceProvider.GetRequiredService<CsvApplicationImportService>();
+        var importer = importScope.ServiceProvider.GetRequiredService<ICsvApplicationImportService>();
         await using var stream = new PausedStream(ValidCsv);
         using var cancellation = new CancellationTokenSource();
         var runningImport = importer.ImportAsync(stream, userId, cancellation.Token);
@@ -83,7 +71,7 @@ public class PostgresImportTests
         Assert.Equal(1, afterRetry!.TotalCount);
 
         using var successScope = second.Services.CreateScope();
-        var successImporter = successScope.ServiceProvider.GetRequiredService<CsvApplicationImportService>();
+        var successImporter = successScope.ServiceProvider.GetRequiredService<ICsvApplicationImportService>();
         await using var successStream = new PausedStream(ValidCsv);
         var successfulImport = successImporter.ImportAsync(successStream, userId, CancellationToken.None);
         try
@@ -107,7 +95,7 @@ public class PostgresImportTests
 
         using (var errorScope = second.Services.CreateScope())
         {
-            var errorImporter = errorScope.ServiceProvider.GetRequiredService<CsvApplicationImportService>();
+            var errorImporter = errorScope.ServiceProvider.GetRequiredService<ICsvApplicationImportService>();
             await using var errorStream = new FailingStream();
             await Assert.ThrowsAsync<IOException>(
                 () => errorImporter.ImportAsync(errorStream, userId, CancellationToken.None));
@@ -120,7 +108,7 @@ public class PostgresImportTests
         }
 
         using var failingScope = second.Services.CreateScope();
-        var failingImporter = failingScope.ServiceProvider.GetRequiredService<CsvApplicationImportService>();
+        var failingImporter = failingScope.ServiceProvider.GetRequiredService<ICsvApplicationImportService>();
         var missingUserId = Guid.NewGuid().ToString();
         await using var validStream = new MemoryStream(Encoding.UTF8.GetBytes(ValidCsv));
         await Assert.ThrowsAsync<DbUpdateException>(

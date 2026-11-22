@@ -10,9 +10,8 @@ namespace JobTracker.Services;
 
 public sealed class CsvApplicationImportService(
     ApplicationDbContext dbContext,
-    IImportConcurrencyGuard concurrencyGuard)
+    IImportConcurrencyGuard concurrencyGuard) : ICsvApplicationImportService
 {
-    public const long MaxImportBytes = 1_048_576;
     private const int MaxImportRows = 500;
     private static readonly string[] ImportHeaders =
     [
@@ -182,7 +181,7 @@ public sealed class CsvApplicationImportService(
         var buffer = new byte[8192];
         while (true)
         {
-            var remainingBytes = (int)(MaxImportBytes - csvStream.Length + 1);
+            var remainingBytes = (int)(ICsvApplicationImportService.MaxImportBytes - csvStream.Length + 1);
             var bytesRead = await input.ReadAsync(
                 buffer.AsMemory(0, Math.Min(buffer.Length, remainingBytes)),
                 cancellationToken);
@@ -191,7 +190,7 @@ public sealed class CsvApplicationImportService(
                 break;
             }
 
-            if (csvStream.Length + bytesRead > MaxImportBytes)
+            if (csvStream.Length + bytesRead > ICsvApplicationImportService.MaxImportBytes)
             {
                 return null;
             }

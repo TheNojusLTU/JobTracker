@@ -10,7 +10,7 @@ namespace JobTracker.Services;
 
 public sealed class AuthService(
     UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager)
+    SignInManager<ApplicationUser> signInManager) : IAuthService
 {
     public async Task<AuthResult> RegisterAsync(RegisterRequest request)
     {

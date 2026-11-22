@@ -1,9 +1,9 @@
 using JobTracker.Api;
 using JobTracker.Models;
 
-namespace JobTracker.Tests.Unit;
+namespace JobTracker.Tests.Api;
 
-public class ApplicationRequestTests
+public class ApplicationContractsTests
 {
     private static ApplicationRequest Valid() => new(
         "Acme", "Backend Developer", "Vilnius", 2500m, "https://acme.lt/jobs/1",

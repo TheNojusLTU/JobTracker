@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using JobTracker.Auth;
 using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace JobTracker.Tests.Integration;
+namespace JobTracker.Tests.TestSupport;
 
 public static class TestClientExtensions
 {

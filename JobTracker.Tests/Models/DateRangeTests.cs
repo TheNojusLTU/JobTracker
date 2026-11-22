@@ -1,6 +1,6 @@
 using JobTracker.Models;
 
-namespace JobTracker.Tests.Unit;
+namespace JobTracker.Tests.Models;
 
 public class DateRangeTests
 {

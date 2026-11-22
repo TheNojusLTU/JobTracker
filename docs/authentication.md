@@ -43,9 +43,11 @@ Auth cookies use SameSite=Lax; antiforgery cookies use SameSite=Strict. Developm
 
 ## Reproducible API checks
 
-There is no test project. `scripts/check-auth.py` uses Python 3's standard library to check validation, duplicate usernames, generic login failures, sign-in cookies, current user, logout, and missing/invalid/stale/mismatched CSRF tokens.
+`JobTracker.Tests/Auth/AuthEndpointsTests.cs` checks the authentication API through HTTP using an in-memory test database. Run it with `dotnet test`. Shared test infrastructure lives in `JobTracker.Tests/TestSupport`.
 
-Point the API at a **disposable PostgreSQL database**, apply the existing migrations, then start the API using the HTTP profile. Do not run this against real user data: it creates two uniquely named test users and does not delete them.
+The existing `scripts/check-auth.py` also uses Python 3's standard library to check validation, duplicate usernames, generic login failures, sign-in cookies, current user, logout, and missing/invalid/stale/mismatched CSRF tokens against a running API.
+
+For that script, point the API at a **disposable PostgreSQL database**, then start the API using the HTTP profile; migrations run on startup. Do not run this against real user data: it creates two uniquely named test users and does not delete them.
 
 ```bash
 python3 scripts/check-auth.py http://localhost:5099 --allow-test-users
