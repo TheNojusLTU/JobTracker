@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import './App.css'
+import { ApplicationSummary } from './ApplicationSummary'
 import { AuthScreen, type AuthMode } from './AuthScreen'
 import {
   ApiError,
@@ -406,20 +407,7 @@ function App() {
             <span className="heading-index" aria-hidden="true">01</span>
           </div>
 
-          <section className="summary-row" aria-label="Application summary">
-            <article className="summary-item">
-              <span className="summary-label">TOTAL APPLICATIONS</span>
-              <strong>{applications?.totalCount ?? '—'}</strong>
-            </article>
-            <article className="summary-item">
-              <span className="summary-label">IN PROGRESS ON PAGE</span>
-              <strong>{applications?.items.filter((application) => ['Applied', 'Interview'].includes(application.status)).length ?? '—'}</strong>
-            </article>
-            <article className="summary-item">
-              <span className="summary-label">INTERVIEWS ON PAGE</span>
-              <strong>{applications?.items.filter((application) => application.status === 'Interview').length ?? '—'}</strong>
-            </article>
-          </section>
+          <ApplicationSummary key={`${user.id}:${refreshCount}`} statuses={statuses} />
 
           <section className="applications-section" id="applications" aria-labelledby="applications-title">
             <div className="section-heading">

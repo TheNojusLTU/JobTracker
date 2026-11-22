@@ -107,3 +107,6 @@ public record ApplicationRequest(
 }
 
 public sealed record ApplicationImportResponse(int ImportedCount);
+
+public sealed record ApplicationStatisticsResponse(
+    int TotalCount, IReadOnlyDictionary<ApplicationStatus, int> ByStatus);

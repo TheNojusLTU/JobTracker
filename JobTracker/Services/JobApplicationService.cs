@@ -8,6 +8,21 @@ namespace JobTracker.Services;
 
 public sealed class JobApplicationService(ApplicationDbContext dbContext) : IJobApplicationService
 {
+    public async Task<ApplicationStatisticsResponse> GetStatisticsAsync(
+        string userId, CancellationToken cancellationToken)
+    {
+        var counts = await dbContext.JobApplications
+            .Where(application => application.UserId == userId)
+            .GroupBy(application => application.Status)
+            .Select(group => new { Status = group.Key, Count = group.Count() })
+            .ToDictionaryAsync(group => group.Status, group => group.Count, cancellationToken);
+
+        var byStatus = Enum.GetValues<ApplicationStatus>()
+            .ToDictionary(status => status, status => counts.GetValueOrDefault(status));
+
+        return new ApplicationStatisticsResponse(byStatus.Values.Sum(), byStatus);
+    }
+
     public async Task<PagedResponse<ApplicationResponse>> GetApplicationsAsync(
         string userId,
         string? search,

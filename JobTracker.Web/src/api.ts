@@ -34,6 +34,11 @@ export type ApplicationImportResponse = {
   importedCount: number
 }
 
+export type ApplicationStatistics = {
+  totalCount: number
+  byStatus: Record<ApplicationStatus, number>
+}
+
 type ApiProblem = {
   title?: string
   detail?: string
@@ -181,6 +186,10 @@ export async function getApplications(
 
 export async function getApplication(id: number): Promise<JobApplication> {
   return apiRequest<JobApplication>(`/api/applications/${id}`)
+}
+
+export function getApplicationStatistics(): Promise<ApplicationStatistics> {
+  return apiRequest<ApplicationStatistics>('/api/applications/statistics')
 }
 
 export async function createApplication(request: ApplicationRequest): Promise<JobApplication> {

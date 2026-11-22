@@ -38,6 +38,52 @@ public class ApplicationsControllerTests(JobTrackerFactory factory) : IClassFixt
     }
 
     [Fact]
+    public async Task Statistics_WhenAnonymous_Returns401()
+    {
+        var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/applications/statistics");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Statistics_CountsOnlyOwnedApplications_AndIncludesEveryStatus()
+    {
+        var (client, _) = await factory.CreateUserClientAsync();
+        var (otherClient, _) = await factory.CreateUserClientAsync();
+        await CreateAsync(otherClient, NewApplication(status: ApplicationStatus.Offer));
+
+        async Task<ApplicationStatisticsResponse> LoadStatisticsAsync() =>
+            (await client.GetFromJsonAsync<ApplicationStatisticsResponse>(
+                "/api/applications/statistics?status=Saved&page=1&pageSize=1", TestClientExtensions.Json))!;
+
+        var empty = await LoadStatisticsAsync();
+        Assert.Equal(0, empty.TotalCount);
+        Assert.Equal(Enum.GetValues<ApplicationStatus>().Length, empty.ByStatus.Count);
+        Assert.All(empty.ByStatus.Values, count => Assert.Equal(0, count));
+
+        var first = await CreateAsync(client, NewApplication(status: ApplicationStatus.Applied));
+        await CreateAsync(client, NewApplication(status: ApplicationStatus.Applied));
+        await CreateAsync(client, NewApplication(status: ApplicationStatus.Interview));
+
+        var populated = await LoadStatisticsAsync();
+        Assert.Equal(3, populated.TotalCount);
+        Assert.Equal(2, populated.ByStatus[ApplicationStatus.Applied]);
+        Assert.Equal(1, populated.ByStatus[ApplicationStatus.Interview]);
+        Assert.Equal(0, populated.ByStatus[ApplicationStatus.Offer]);
+
+        var update = await client.SendWithCsrfAsync(HttpMethod.Put, $"/api/applications/{first.Id}",
+            NewApplication(status: ApplicationStatus.Offer));
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+
+        var updated = await LoadStatisticsAsync();
+        Assert.Equal(3, updated.TotalCount);
+        Assert.Equal(1, updated.ByStatus[ApplicationStatus.Applied]);
+        Assert.Equal(1, updated.ByStatus[ApplicationStatus.Offer]);
+    }
+
+    [Fact]
     public async Task Create_WithValidBody_ReturnsCreatedApplication()
     {
         var (client, _) = await factory.CreateUserClientAsync();
