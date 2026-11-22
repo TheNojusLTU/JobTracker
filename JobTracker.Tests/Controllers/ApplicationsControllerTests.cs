@@ -27,6 +27,13 @@ public class ApplicationsControllerTests(JobTrackerFactory factory) : IClassFixt
         return await response.ReadAsAsync<ApplicationResponse>();
     }
 
+    private static async Task<PagedResponse<string>> ReadCompanyPageAsync(HttpClient client, string query)
+    {
+        var page = await client.GetFromJsonAsync<PagedResponse<ApplicationResponse>>(
+            "/api/applications" + query, TestClientExtensions.Json);
+        return page!.Map(application => application.CompanyName);
+    }
+
     [Fact]
     public async Task List_WhenAnonymous_Returns401()
     {
@@ -391,11 +398,7 @@ public class ApplicationsControllerTests(JobTrackerFactory factory) : IClassFixt
         await CreateAsync(client, NewApplication(company: "Globex", title: "Frontend Developer", location: "Kaunas", date: "2026-10-01", status: ApplicationStatus.Interview));
         await CreateAsync(client, NewApplication(company: "Initech", title: "QA Engineer", location: "Vilnius", date: "2026-11-01", status: ApplicationStatus.Applied));
 
-        async Task<string[]> Companies(string query)
-        {
-            var page = await client.GetFromJsonAsync<PagedResponse<ApplicationResponse>>("/api/applications" + query, TestClientExtensions.Json);
-            return page!.Items.Select(application => application.CompanyName).ToArray();
-        }
+        async Task<IReadOnlyList<string>> Companies(string query) => (await ReadCompanyPageAsync(client, query)).Items;
 
         Assert.Equal(["Initech", "Globex", "Acme"], await Companies(""));
         Assert.Equal(["Acme", "Globex", "Initech"], await Companies("?newestFirst=false"));
@@ -415,13 +418,13 @@ public class ApplicationsControllerTests(JobTrackerFactory factory) : IClassFixt
             await CreateAsync(client, NewApplication(company: $"Company {day}", date: $"2026-10-0{day}"));
         }
 
-        var page = await client.GetFromJsonAsync<PagedResponse<ApplicationResponse>>("/api/applications?page=3&pageSize=2", TestClientExtensions.Json);
+        var page = await ReadCompanyPageAsync(client, "?page=3&pageSize=2");
 
-        Assert.Equal(3, page!.Page);
+        Assert.Equal(3, page.Page);
         Assert.Equal(2, page.PageSize);
         Assert.Equal(5, page.TotalCount);
         Assert.Equal(3, page.TotalPages);
-        Assert.Equal("Company 1", Assert.Single(page.Items).CompanyName);
+        Assert.Equal("Company 1", Assert.Single(page.Items));
     }
 
     [Theory]

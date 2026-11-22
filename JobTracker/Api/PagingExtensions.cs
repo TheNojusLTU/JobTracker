@@ -23,7 +23,7 @@ public static class PagingExtensions
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        return new PagedResponse<TResult>(items.Select(map).ToList(), page, pageSize, totalCount);
+        return PagedResponse<TResult>.From(items, page, pageSize, totalCount, map);
     }
 
     public static Dictionary<string, string[]> ValidatePaging(int page, int pageSize)
