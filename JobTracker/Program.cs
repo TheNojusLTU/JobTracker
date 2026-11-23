@@ -32,6 +32,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IJobApplicationService, JobApplicationService>();
 builder.Services.AddScoped<ICsvApplicationImportService, CsvApplicationImportService>();
 builder.Services.AddScoped<IImportConcurrencyGuard, PostgresImportConcurrencyGuard>();
+builder.Services.AddSingleton<ActiveImports>();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {

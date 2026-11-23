@@ -415,6 +415,23 @@ public class ApplicationsControllerTests(JobTrackerFactory factory) : IClassFixt
     }
 
     [Fact]
+    public async Task Import_WhenSameServerAlreadyImportsForUser_Returns409_UntilFinished()
+    {
+        var (client, _) = await factory.CreateUserClientAsync();
+        var user = await client.GetFromJsonAsync<UserResponse>("/api/auth/me", TestClientExtensions.Json);
+        var activeImports = factory.Services.GetRequiredService<ActiveImports>();
+        var csv = Header + "\nAcme,Dev,,,,2026-10-01,,";
+
+        Assert.True(activeImports.TryStart(user!.Id));
+        var conflict = await client.SendWithCsrfAsync(HttpMethod.Post, "/api/applications/import", Csv(csv));
+        activeImports.Finish(user.Id);
+        var retry = await client.SendWithCsrfAsync(HttpMethod.Post, "/api/applications/import", Csv(csv));
+
+        Assert.Equal(HttpStatusCode.Conflict, conflict.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, retry.StatusCode);
+    }
+
+    [Fact]
     public async Task Import_AfterInvalidCsv_CanRetry()
     {
         var (client, _) = await factory.CreateUserClientAsync();
