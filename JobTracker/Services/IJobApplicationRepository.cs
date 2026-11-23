@@ -1,3 +1,4 @@
+using JobTracker.Api;
 using JobTracker.Models;
 
 namespace JobTracker.Services;
