@@ -10,7 +10,8 @@ namespace JobTracker.Services;
 
 public sealed class CsvApplicationImportService(
     ApplicationDbContext dbContext,
-    IImportConcurrencyGuard concurrencyGuard) : ICsvApplicationImportService
+    IImportConcurrencyGuard concurrencyGuard,
+    ActiveImports activeImports) : ICsvApplicationImportService
 {
     private const int MaxImportRows = 500;
     private static readonly string[] ImportHeaders =
@@ -20,6 +21,27 @@ public sealed class CsvApplicationImportService(
     ];
 
     public async Task<CsvApplicationImportResult> ImportAsync(
+        Stream csvStream,
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        // same server: reject before opening a transaction, other servers are covered by the db lock
+        if (!activeImports.TryStart(userId))
+        {
+            return CsvApplicationImportResult.ImportInProgress();
+        }
+
+        try
+        {
+            return await ImportWithDatabaseLockAsync(csvStream, userId, cancellationToken);
+        }
+        finally
+        {
+            activeImports.Finish(userId);
+        }
+    }
+
+    private async Task<CsvApplicationImportResult> ImportWithDatabaseLockAsync(
         Stream csvStream,
         string userId,
         CancellationToken cancellationToken)
