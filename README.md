@@ -61,8 +61,9 @@ Only one CSV import per user may run at a time, including across API instances u
 
 Application routes are implemented in `JobTracker/Controllers/ApplicationsController.cs`.
 The controller receives application and CSV import service interfaces through its
-constructor; authentication endpoints use `IAuthService`. Implementations are
-registered in `Program.cs`.
+constructor; authentication endpoints use `IAuthService`. The application service
+uses `IJobApplicationRepository`, implemented with EF Core in the data layer.
+Implementations are registered in `Program.cs`.
 
 `JobTracker.Tests` mirrors the backend folders (`Api`, `Auth`, `Controllers`, `Data`,
 `Extensions`, `Models`, and `Services`). Shared fixtures and HTTP helpers live in
