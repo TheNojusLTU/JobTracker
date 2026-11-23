@@ -29,7 +29,6 @@ builder.Services.AddProblemDetails(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<IJobApplicationRepository, JobApplicationRepository>();
 builder.Services.AddScoped<IJobApplicationService, JobApplicationService>();
 builder.Services.AddScoped<ICsvApplicationImportService, CsvApplicationImportService>();
 builder.Services.AddScoped<IImportConcurrencyGuard, PostgresImportConcurrencyGuard>();
