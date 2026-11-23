@@ -11,7 +11,9 @@ public record ApplicationResponse(
     string? JobUrl,
     DateTime ApplicationDate,
     ApplicationStatus Status,
-    string? Notes)
+    string? Notes,
+    bool IsFavorite,
+    bool IsPriority)
 {
     public static ApplicationResponse From(JobApplication application) => new(
         application.Id,
@@ -22,8 +24,12 @@ public record ApplicationResponse(
         application.JobUrl,
         application.ApplicationDate,
         application.Status,
-        application.Notes);
+        application.Notes,
+        application.IsFavorite,
+        application.IsPriority);
 }
+
+public sealed record ApplicationFlagsRequest(bool? IsFavorite, bool? IsPriority);
 
 public record ApplicationRequest(
     string? CompanyName,
@@ -96,7 +102,7 @@ public record ApplicationRequest(
         // postgres timestamptz only accepts UTC, same as the old form handler
         application.ApplicationDate = DateTime.SpecifyKind(ApplicationDate!.Value.Date, DateTimeKind.Utc);
         // new applications start as Saved, updates must send a status (checked in Validate)
-        application.Status = Status ?? ApplicationStatus.Saved;
+        application.RecordStatus(Status ?? ApplicationStatus.Saved);
         application.Notes = string.IsNullOrWhiteSpace(Notes) ? null : Notes.Trim();
     }
 
@@ -107,3 +113,14 @@ public record ApplicationRequest(
 }
 
 public sealed record ApplicationImportResponse(int ImportedCount);
+
+public sealed record MonthlyApplicationCount(int Year, int Month, int Count);
+
+public sealed record ApplicationStatisticsResponse(
+    int TotalCount,
+    IReadOnlyDictionary<ApplicationStatus, int> ByStatus,
+    IReadOnlyList<MonthlyApplicationCount> ByMonth,
+    int InterviewCount,
+    int OfferCount,
+    decimal? ApplicationToInterviewRate,
+    decimal? InterviewToOfferRate);

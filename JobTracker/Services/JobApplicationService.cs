@@ -5,19 +5,24 @@ namespace JobTracker.Services;
 
 public sealed class JobApplicationService(IJobApplicationRepository repository) : IJobApplicationService
 {
+    public async Task<ApplicationStatisticsResponse> GetStatisticsAsync(
+        string userId, CancellationToken cancellationToken)
+        => await repository.GetStatisticsAsync(userId, cancellationToken);
+
     public async Task<PagedResponse<ApplicationResponse>> GetApplicationsAsync(
         string userId,
         string? search,
         ApplicationStatus? status,
         string? location,
         DateRange? dates,
+        bool? priority,
         bool newestFirst,
         int page,
         int pageSize,
         CancellationToken cancellationToken)
     {
         var (items, totalCount) = await repository.ListAsync(
-            userId, search, status, location, dates, newestFirst, page, pageSize, cancellationToken);
+            userId, search, status, location, dates, priority, newestFirst, page, pageSize, cancellationToken);
         return new PagedResponse<ApplicationResponse>(
             items.Select(ApplicationResponse.From).ToList(), page, pageSize, totalCount);
     }
@@ -63,6 +68,10 @@ public sealed class JobApplicationService(IJobApplicationRepository repository) 
 
         return ApplicationResponse.From(application);
     }
+
+    public async Task<bool> UpdateFlagsAsync(
+        int id, ApplicationFlagsRequest request, string userId, CancellationToken cancellationToken)
+        => await repository.UpdateFlagsAsync(id, request, userId, cancellationToken);
 
     public async Task<bool> DeleteApplicationAsync(
         int id,

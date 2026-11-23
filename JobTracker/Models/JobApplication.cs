@@ -20,9 +20,24 @@ public class JobApplication
 
     public ApplicationStatus Status { get; set; }
 
+    public bool HasReachedInterview { get; private set; }
+
+    public bool HasReachedOffer { get; private set; }
+
     public string? Notes { get; set; }
+
+    public bool IsFavorite { get; set; }
+
+    public bool IsPriority { get; set; }
 
     public string UserId { get; set; } = string.Empty;
 
     public ApplicationUser User { get; set; } = null!;
+
+    public void RecordStatus(ApplicationStatus status)
+    {
+        Status = status;
+        HasReachedInterview |= status == ApplicationStatus.Interview;
+        HasReachedOffer |= status == ApplicationStatus.Offer;
+    }
 }

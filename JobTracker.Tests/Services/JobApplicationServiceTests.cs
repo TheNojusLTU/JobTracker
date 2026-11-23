@@ -16,9 +16,9 @@ public class JobApplicationServiceTests
         using var cancellation = new CancellationTokenSource();
 
         var result = await service.GetApplicationsAsync(
-            "owner", "developer", ApplicationStatus.Applied, "Vilnius", dates, false, 2, 5, cancellation.Token);
+            "owner", "developer", ApplicationStatus.Applied, "Vilnius", dates, null, false, 2, 5, cancellation.Token);
 
-        Assert.Equal(("owner", "developer", ApplicationStatus.Applied, "Vilnius", dates, false, 2, 5, cancellation.Token),
+        Assert.Equal(("owner", "developer", ApplicationStatus.Applied, "Vilnius", dates, (bool?)null, false, 2, 5, cancellation.Token),
             repository.ListArguments);
         Assert.Equal(12, result.TotalCount);
         Assert.Equal(2, result.Page);
@@ -76,15 +76,19 @@ public class JobApplicationServiceTests
         public int SaveCount { get; private set; }
         public CancellationToken LastSaveToken { get; private set; }
         public (IReadOnlyList<JobApplication> Items, int TotalCount) ListResult { get; set; }
-        public (string UserId, string? Search, ApplicationStatus? Status, string? Location, DateRange? Dates,
+        public (string UserId, string? Search, ApplicationStatus? Status, string? Location, DateRange? Dates, bool? Priority,
             bool NewestFirst, int Page, int PageSize, CancellationToken CancellationToken) ListArguments
         { get; private set; }
 
+        public Task<ApplicationStatisticsResponse> GetStatisticsAsync(
+            string userId, CancellationToken cancellationToken) =>
+            throw new NotImplementedException();
+
         public Task<(IReadOnlyList<JobApplication> Items, int TotalCount)> ListAsync(
-            string userId, string? search, ApplicationStatus? status, string? location, DateRange? dates,
+            string userId, string? search, ApplicationStatus? status, string? location, DateRange? dates, bool? priority,
             bool newestFirst, int page, int pageSize, CancellationToken cancellationToken)
         {
-            ListArguments = (userId, search, status, location, dates, newestFirst, page, pageSize, cancellationToken);
+            ListArguments = (userId, search, status, location, dates, priority, newestFirst, page, pageSize, cancellationToken);
             return Task.FromResult(ListResult);
         }
 
@@ -94,6 +98,10 @@ public class JobApplicationServiceTests
 
         public Task<JobApplication?> GetForUpdateAsync(int id, string userId, CancellationToken cancellationToken) =>
             GetAsync(id, userId, cancellationToken);
+
+        public Task<bool> UpdateFlagsAsync(
+            int id, ApplicationFlagsRequest request, string userId, CancellationToken cancellationToken) =>
+            throw new NotImplementedException();
 
         public void Add(JobApplication application)
         {

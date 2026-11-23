@@ -5,7 +5,7 @@ A Software Engineering course project for tracking job applications.
 - `JobTracker`: ASP.NET Core (.NET 10) backend API with PostgreSQL, EF Core, and Identity.
 - `JobTracker.Web`: separate React + TypeScript frontend using Vite.
 
-Planned features include accounts, application tracking, search, interviews, and dashboard statistics.
+Features include accounts, application tracking, search, and dashboard statistics.
 
 ## Setup
 
@@ -56,6 +56,20 @@ Database models and migrations are preserved. Cookie authentication APIs are imp
 The React application list also supports importing CSV files through `POST /api/applications/import`. The CSV must have these columns, in order: `CompanyName,JobTitle,Location,Salary,JobUrl,ApplicationDate,Status,Notes`. Use `YYYY-MM-DD` dates, invariant decimal notation, and a valid status name; optional values may be left blank. Imports are limited to 1 MB and 500 rows and are all-or-nothing.
 
 Only one CSV import per user may run at a time, including across API instances using the same PostgreSQL database. An overlapping request receives HTTP 409 Problem Details; retry after the first import finishes. Different users may import concurrently. The guard does not prevent duplicate imports submitted after a prior import completes. A transaction and database connection remain open while the request is read and processed, so configure appropriate upload and database idle-in-transaction timeouts. The advisory-lock key is a stable 64-bit hash of the user ID; a hash collision could exceptionally reject an unrelated user's import.
+
+Inside one API instance, a singleton `ActiveImports` (a `ConcurrentDictionary` of user IDs) rejects an overlapping import before any database transaction is opened. The PostgreSQL lock still covers imports that land on different instances.
+
+## Dashboard statistics
+
+The overview summarizes all of the signed-in user's applications regardless of list filters or pagination. It counts applications by current status and by application date (one row per month with applications, newest first).
+
+Interview and offer totals count each application that reached the corresponding status once, even if its status changed later. The application-to-interview rate divides the interview total by all tracked applications. The interview-to-offer rate divides the number of applications with both milestones by the number that reached Interview. A rate with no denominator is shown as N/A.
+
+On upgrade, existing applications get milestone credit for their current Interview or Offer status. Earlier transitions were not stored and cannot be recovered.
+
+## Favorites and priority
+
+The Favorite and Priority buttons in the application list toggle independent flags. Use the priority filter to show only priority or only non-priority applications. The API applies the filter before paginating the results.
 
 ## Checks
 
