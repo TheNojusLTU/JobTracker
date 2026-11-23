@@ -115,6 +115,12 @@ namespace JobTracker.Migrations
                     b.Property<bool>("HasReachedOffer")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsFavorite")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsPriority")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("JobTitle")
                         .IsRequired()
                         .HasColumnType("text");

@@ -26,6 +26,10 @@ public class JobApplication
 
     public string? Notes { get; set; }
 
+    public bool IsFavorite { get; set; }
+
+    public bool IsPriority { get; set; }
+
     public string UserId { get; set; } = string.Empty;
 
     public ApplicationUser User { get; set; } = null!;

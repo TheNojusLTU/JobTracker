@@ -8,7 +8,8 @@ public static class JobApplicationFilterExtensions
         this IQueryable<JobApplication> applications,
         ApplicationStatus? status = null,
         string? location = null,
-        DateRange? dates = null)
+        DateRange? dates = null,
+        bool? priority = null)
     {
         ArgumentNullException.ThrowIfNull(applications);
 
@@ -17,6 +18,11 @@ public static class JobApplicationFilterExtensions
         if (status is not null)
         {
             result = result.Where(a => a.Status == status);
+        }
+
+        if (priority is { } isPriority)
+        {
+            result = result.Where(a => a.IsPriority == isPriority);
         }
 
         if (!string.IsNullOrWhiteSpace(location))
@@ -45,10 +51,11 @@ public static class JobApplicationFilterExtensions
         this IEnumerable<JobApplication> applications,
         ApplicationStatus? status = null,
         string? location = null,
-        DateRange? dates = null)
+        DateRange? dates = null,
+        bool? priority = null)
     {
         ArgumentNullException.ThrowIfNull(applications);
 
-        return applications.AsQueryable().Filter(status, location, dates);
+        return applications.AsQueryable().Filter(status, location, dates, priority);
     }
 }

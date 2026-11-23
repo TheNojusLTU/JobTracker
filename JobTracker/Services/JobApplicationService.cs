@@ -56,6 +56,7 @@ public sealed class JobApplicationService(ApplicationDbContext dbContext) : IJob
         ApplicationStatus? status,
         string? location,
         DateRange? dates,
+        bool? priority,
         bool newestFirst,
         int page,
         int pageSize,
@@ -65,7 +66,7 @@ public sealed class JobApplicationService(ApplicationDbContext dbContext) : IJob
             .AsNoTracking()
             .Where(application => application.UserId == userId)
             .Search(search)
-            .Filter(status: status, location: location, dates: dates)
+            .Filter(status: status, location: location, dates: dates, priority: priority)
             .SortByDate(newestFirst)
             .ToPagedResponseAsync(page, pageSize, ApplicationResponse.From, cancellationToken);
     }
@@ -112,6 +113,29 @@ public sealed class JobApplicationService(ApplicationDbContext dbContext) : IJob
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return ApplicationResponse.From(application);
+    }
+
+    public async Task<bool> UpdateFlagsAsync(
+        int id, ApplicationFlagsRequest request, string userId, CancellationToken cancellationToken)
+    {
+        var application = await FindOwnedAsync(dbContext.JobApplications, id, userId, cancellationToken);
+        if (application is null)
+        {
+            return false;
+        }
+
+        if (request.IsFavorite is { } isFavorite)
+        {
+            application.IsFavorite = isFavorite;
+        }
+
+        if (request.IsPriority is { } isPriority)
+        {
+            application.IsPriority = isPriority;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     public async Task<bool> DeleteApplicationAsync(

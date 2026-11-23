@@ -187,6 +187,7 @@ public class ApplicationsControllerTests(JobTrackerFactory factory) : IClassFixt
     [InlineData("?page=abc")]
     [InlineData("?status=Unknown")]
     [InlineData("?newestFirst=unknown")]
+    [InlineData("?priority=unknown")]
     public async Task List_WithMalformedQuery_Returns400(string query)
     {
         var (client, _) = await factory.CreateUserClientAsync();
@@ -261,6 +262,83 @@ public class ApplicationsControllerTests(JobTrackerFactory factory) : IClassFixt
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal(["Status"], (await response.ReadErrorsAsync()).Keys);
+    }
+
+    [Fact]
+    public async Task Flags_CanBeSetAndClearedIndependently_AndSurviveEdits()
+    {
+        var (client, _) = await factory.CreateUserClientAsync();
+        var created = await CreateAsync(client, NewApplication());
+        var applicationUrl = $"/api/applications/{created.Id}";
+        var flagsUrl = applicationUrl + "/flags";
+        Assert.False(created.IsFavorite);
+        Assert.False(created.IsPriority);
+
+        var favorite = await client.SendWithCsrfAsync(HttpMethod.Patch, flagsUrl, new { isFavorite = true });
+        Assert.Equal(HttpStatusCode.NoContent, favorite.StatusCode);
+        var favorited = await client.GetFromJsonAsync<ApplicationResponse>(applicationUrl, TestClientExtensions.Json);
+        Assert.True(favorited!.IsFavorite);
+        Assert.False(favorited.IsPriority);
+
+        var priority = await client.SendWithCsrfAsync(HttpMethod.Patch, flagsUrl, new { isPriority = true });
+        Assert.Equal(HttpStatusCode.NoContent, priority.StatusCode);
+        var edit = await client.SendWithCsrfAsync(HttpMethod.Put, applicationUrl, NewApplication(status: ApplicationStatus.Applied));
+        Assert.Equal(HttpStatusCode.OK, edit.StatusCode);
+        var edited = await edit.ReadAsAsync<ApplicationResponse>();
+        Assert.True(edited.IsFavorite);
+        Assert.True(edited.IsPriority);
+
+        var removeFavorite = await client.SendWithCsrfAsync(HttpMethod.Patch, flagsUrl, new { isFavorite = false });
+        Assert.Equal(HttpStatusCode.NoContent, removeFavorite.StatusCode);
+        var afterRemoval = await client.GetFromJsonAsync<ApplicationResponse>(applicationUrl, TestClientExtensions.Json);
+        Assert.False(afterRemoval!.IsFavorite);
+        Assert.True(afterRemoval.IsPriority);
+
+        var removePriority = await client.SendWithCsrfAsync(HttpMethod.Patch, flagsUrl, new { isPriority = false });
+        Assert.Equal(HttpStatusCode.NoContent, removePriority.StatusCode);
+        var cleared = await client.GetFromJsonAsync<ApplicationResponse>(applicationUrl, TestClientExtensions.Json);
+        Assert.False(cleared!.IsPriority);
+    }
+
+    [Fact]
+    public async Task Flags_RequireOwnershipCsrfAndAtLeastOneValue()
+    {
+        var (owner, _) = await factory.CreateUserClientAsync();
+        var (otherUser, _) = await factory.CreateUserClientAsync();
+        var created = await CreateAsync(owner, NewApplication());
+        var flagsUrl = $"/api/applications/{created.Id}/flags";
+
+        var other = await otherUser.SendWithCsrfAsync(HttpMethod.Patch, flagsUrl, new { isFavorite = true });
+        var noCsrf = await owner.PatchAsJsonAsync(flagsUrl, new { isFavorite = true });
+        var empty = await owner.SendWithCsrfAsync(HttpMethod.Patch, flagsUrl, new { });
+        Assert.Equal(HttpStatusCode.NotFound, other.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, noCsrf.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, empty.StatusCode);
+        Assert.Contains("flags", (await empty.ReadErrorsAsync()).Keys);
+    }
+
+    [Fact]
+    public async Task List_FiltersPriorityBeforePaginatingAndCombinesWithSearch()
+    {
+        var (client, _) = await factory.CreateUserClientAsync();
+        var marked = await CreateAsync(client, NewApplication(company: "Acme London", date: "2026-10-01"));
+        var unmarked = await CreateAsync(client, NewApplication(company: "Acme Dublin", date: "2026-10-02"));
+        var anotherMarked = await CreateAsync(client, NewApplication(company: "Globex", date: "2026-10-03"));
+        foreach (var id in new[] { marked.Id, anotherMarked.Id })
+        {
+            var patch = await client.SendWithCsrfAsync(HttpMethod.Patch, $"/api/applications/{id}/flags", new { isPriority = true });
+            Assert.Equal(HttpStatusCode.NoContent, patch.StatusCode);
+        }
+
+        var priority = await client.GetFromJsonAsync<PagedResponse<ApplicationResponse>>(
+            "/api/applications?priority=true&search=acme&pageSize=1", TestClientExtensions.Json);
+        var nonPriority = await client.GetFromJsonAsync<PagedResponse<ApplicationResponse>>(
+            "/api/applications?priority=false&pageSize=1", TestClientExtensions.Json);
+
+        Assert.Equal(1, priority!.TotalCount);
+        Assert.Equal(marked.Id, Assert.Single(priority.Items).Id);
+        Assert.Equal(1, nonPriority!.TotalCount);
+        Assert.Equal(unmarked.Id, Assert.Single(nonPriority.Items).Id);
     }
 
     [Fact]

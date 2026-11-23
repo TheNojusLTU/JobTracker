@@ -11,7 +11,9 @@ public record ApplicationResponse(
     string? JobUrl,
     DateTime ApplicationDate,
     ApplicationStatus Status,
-    string? Notes)
+    string? Notes,
+    bool IsFavorite,
+    bool IsPriority)
 {
     public static ApplicationResponse From(JobApplication application) => new(
         application.Id,
@@ -22,8 +24,12 @@ public record ApplicationResponse(
         application.JobUrl,
         application.ApplicationDate,
         application.Status,
-        application.Notes);
+        application.Notes,
+        application.IsFavorite,
+        application.IsPriority);
 }
+
+public sealed record ApplicationFlagsRequest(bool? IsFavorite, bool? IsPriority);
 
 public record ApplicationRequest(
     string? CompanyName,
