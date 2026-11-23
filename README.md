@@ -71,7 +71,28 @@ On upgrade, existing applications get milestone credit for their current Intervi
 
 The Favorite and Priority buttons in the application list toggle independent flags. Use the priority filter to show only priority or only non-priority applications. The API applies the filter before paginating the results.
 
-## Checks
+## Generic page mapping
+
+`PagedResponse<T>` defines the generic method `Map<TResult>(Func<T, TResult> map)`.
+It converts a page's items to another type while preserving the page number, page
+size, and total count. The API calls the shared `From<TSource>` factory to build
+a response directly from the requested database rows. The filter and pagination
+tests use `Map` to read a page of company names while retaining its paging metadata.
+
+For example, the same page can produce labels or flags without repeating the
+item projection and paging metadata construction:
+
+```csharp
+var page = new PagedResponse<int>([3, 1, 2], Page: 2, PageSize: 3, TotalCount: 8);
+PagedResponse<string> labels = page.Map(value => $"Application {value}");
+PagedResponse<bool> flags = page.Map(value => value > 1);
+```
+
+This keeps the conversion and metadata copying in one implementation for every
+source and result type. `PagedResponseTests` verifies reuse with both result types
+and checks that mapping preserves paging information and the original items.
+
+## Project structure
 
 Application routes are implemented in `JobTracker/Controllers/ApplicationsController.cs`.
 The controller receives application and CSV import service interfaces through its
@@ -81,6 +102,8 @@ registered in `Program.cs`.
 `JobTracker.Tests` mirrors the backend folders (`Api`, `Auth`, `Controllers`, `Data`,
 `Extensions`, `Models`, and `Services`). Shared fixtures and HTTP helpers live in
 `TestSupport`; controller and endpoint tests exercise the API through HTTP.
+
+## Checks
 
 ```bash
 dotnet build
