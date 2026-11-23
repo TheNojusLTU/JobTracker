@@ -21,6 +21,14 @@ public sealed class ApplicationsController(
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)
         ?? throw new InvalidOperationException("Authenticated user has no id claim.");
 
+    [HttpGet("statistics", Name = "GetApplicationStatistics")]
+    [EndpointSummary("Summarizes the current user's applications by status and month, including interview and offer statistics.")]
+    [ProducesResponseType<ApplicationStatisticsResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApplicationStatisticsResponse>> GetStatistics(CancellationToken cancellationToken)
+    {
+        return Ok(await applicationService.GetStatisticsAsync(UserId, cancellationToken));
+    }
+
     [HttpGet(Name = "GetApplications")]
     [EndpointSummary("Lists the current user's applications, with optional search, filters and sorting.")]
     [ProducesResponseType<PagedResponse<ApplicationResponse>>(StatusCodes.Status200OK)]

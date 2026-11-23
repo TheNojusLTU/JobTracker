@@ -5,6 +5,8 @@ namespace JobTracker.Services;
 
 public interface IJobApplicationService
 {
+    Task<ApplicationStatisticsResponse> GetStatisticsAsync(string userId, CancellationToken cancellationToken);
+
     Task<PagedResponse<ApplicationResponse>> GetApplicationsAsync(
         string userId,
         string? search,

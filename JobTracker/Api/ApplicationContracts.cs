@@ -96,7 +96,7 @@ public record ApplicationRequest(
         // postgres timestamptz only accepts UTC, same as the old form handler
         application.ApplicationDate = DateTime.SpecifyKind(ApplicationDate!.Value.Date, DateTimeKind.Utc);
         // new applications start as Saved, updates must send a status (checked in Validate)
-        application.Status = Status ?? ApplicationStatus.Saved;
+        application.RecordStatus(Status ?? ApplicationStatus.Saved);
         application.Notes = string.IsNullOrWhiteSpace(Notes) ? null : Notes.Trim();
     }
 
@@ -107,3 +107,14 @@ public record ApplicationRequest(
 }
 
 public sealed record ApplicationImportResponse(int ImportedCount);
+
+public sealed record MonthlyApplicationCount(int Year, int Month, int Count);
+
+public sealed record ApplicationStatisticsResponse(
+    int TotalCount,
+    IReadOnlyDictionary<ApplicationStatus, int> ByStatus,
+    IReadOnlyList<MonthlyApplicationCount> ByMonth,
+    int InterviewCount,
+    int OfferCount,
+    decimal? ApplicationToInterviewRate,
+    decimal? InterviewToOfferRate);
