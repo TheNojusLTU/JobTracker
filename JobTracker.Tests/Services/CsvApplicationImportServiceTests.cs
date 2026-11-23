@@ -69,6 +69,10 @@ public class CsvApplicationImportServiceTests
         Assert.Equal(HttpStatusCode.OK, retry.StatusCode);
         var afterRetry = await client.GetFromJsonAsync<PagedResponse<ApplicationResponse>>("/api/applications", TestClientExtensions.Json);
         Assert.Equal(1, afterRetry!.TotalCount);
+        var statistics = await client.GetFromJsonAsync<ApplicationStatisticsResponse>("/api/applications/statistics", TestClientExtensions.Json);
+        Assert.Equal(new MonthlyApplicationCount(2026, 10, 1), Assert.Single(statistics!.ByMonth));
+        Assert.Equal(0m, statistics.ApplicationToInterviewRate);
+        Assert.Null(statistics.InterviewToOfferRate);
 
         using var successScope = second.Services.CreateScope();
         var successImporter = successScope.ServiceProvider.GetRequiredService<ICsvApplicationImportService>();

@@ -5,12 +5,15 @@ namespace JobTracker.Services;
 
 public interface IJobApplicationService
 {
+    Task<ApplicationStatisticsResponse> GetStatisticsAsync(string userId, CancellationToken cancellationToken);
+
     Task<PagedResponse<ApplicationResponse>> GetApplicationsAsync(
         string userId,
         string? search,
         ApplicationStatus? status,
         string? location,
         DateRange? dates,
+        bool? priority,
         bool newestFirst,
         int page,
         int pageSize,
@@ -23,6 +26,8 @@ public interface IJobApplicationService
 
     Task<ApplicationResponse?> UpdateApplicationAsync(
         int id, ApplicationRequest request, string userId, CancellationToken cancellationToken);
+
+    Task<bool> UpdateFlagsAsync(int id, ApplicationFlagsRequest request, string userId, CancellationToken cancellationToken);
 
     Task<bool> DeleteApplicationAsync(int id, string userId, CancellationToken cancellationToken);
 }

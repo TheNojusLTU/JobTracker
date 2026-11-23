@@ -107,11 +107,13 @@ public class ApplicationContractsTests
             JobUrl = "https://acme.lt",
             ApplicationDate = new DateTime(2026, 10, 1),
             Status = ApplicationStatus.Offer,
-            Notes = "n"
+            Notes = "n",
+            IsFavorite = true,
+            IsPriority = true
         };
 
         var response = ApplicationResponse.From(application);
 
-        Assert.Equal(new ApplicationResponse(7, "Acme", "Dev", "Vilnius", 10m, "https://acme.lt", new DateTime(2026, 10, 1), ApplicationStatus.Offer, "n"), response);
+        Assert.Equal(new ApplicationResponse(7, "Acme", "Dev", "Vilnius", 10m, "https://acme.lt", new DateTime(2026, 10, 1), ApplicationStatus.Offer, "n", IsFavorite: true, IsPriority: true), response);
     }
 }
